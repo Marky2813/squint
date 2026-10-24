@@ -1,13 +1,14 @@
 [project]
 name = "squint"
 version = "0.1.0"
-description = "Add your description here"
+description = "Local screenshot privacy checker"
 readme = "README.md"
 authors = [
     { name = "Sarthak Narula", email = "messagetosarthak@gmail.com" }
 ]
-requires-python = ">=3.15"
+requires-python = ">=3.12"
 dependencies = [
+    "pillow>=13.0.0",
     "requests>=2.34.2",
 ]
 
