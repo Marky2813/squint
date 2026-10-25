@@ -1,8 +1,11 @@
 """squint watch: scan each new screenshot as it lands in the screenshot folder."""
 
+import signal
 import subprocess
 import tempfile
+import threading
 import time
+from collections.abc import Callable
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -10,7 +13,7 @@ from PIL import Image, ImageDraw, ImageFont
 from squint.core.classify import OllamaClassifier
 from squint.core.pipeline import Classifier, analyze
 from squint.core.review import ReviewSession
-from squint.platforms.base import Desktop, OcrEngine
+from squint.platforms.base import Clipboard, Desktop, OcrEngine
 from squint.server import ReviewServer
 
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg"}
@@ -67,12 +70,14 @@ def warm_up_ocr(ocr: OcrEngine) -> None:
 
 def handle(
     path: Path,
+    source: str,
     ocr: OcrEngine,
     classifier: Classifier,
     server: ReviewServer,
     desktop: Desktop,
     quiet: bool,
 ) -> None:
+    """Scan one image. Flagged results go to review (and, in live mode, the clipboard)."""
     started = time.perf_counter()
     try:
         lines = ocr.recognize(path)
@@ -82,18 +87,37 @@ def handle(
         return
     result = analyze(lines, classifier)
     elapsed = time.perf_counter() - started
-    print(f"{path.name}: {len(result.flagged)} flagged in {elapsed:.2f}s")
-    if not result.findings:
-        if not quiet:
+    print(f"{source}: {len(result.flagged)} flagged in {elapsed:.2f}s")
+    if not result.flagged:
+        if source == "clipboard":
+            path.unlink(missing_ok=True)  # never keep clean clipboard images around
+        elif not quiet:
             desktop.notify("Squint", f"✓ {path.name} looks clean")
         return
-    server.show(ReviewSession(path, result))
+    server.show(ReviewSession(path, result, source))
     if not server.page_open():
         desktop.open_url(server.url)
 
 
+def stop_on_signals() -> None:
+    """Treat terminal close and kill like Ctrl-C so cleanup (thumbnail restore) still runs."""
+    if threading.current_thread() is not threading.main_thread():
+        return
+
+    def interrupt(signum, frame):
+        raise KeyboardInterrupt
+
+    for sig in (signal.SIGTERM, signal.SIGHUP):
+        signal.signal(sig, interrupt)
+
+
 def run(
-    ocr: OcrEngine, desktop: Desktop, quiet: bool = False, interval: float = 0.1
+    ocr: OcrEngine,
+    desktop: Desktop,
+    make_clipboard: Callable[[Path], Clipboard],
+    launch_ui: Callable[[str], subprocess.Popen | None],
+    quiet: bool = False,
+    interval: float = 0.1,
 ) -> None:
     folder = desktop.screenshot_dir()
     classifier = OllamaClassifier()
@@ -101,16 +125,29 @@ def run(
     warm_up_ocr(ocr)
     if not classifier.warm_up():
         print("warning: Gemma unavailable; every ambiguous match will be flagged")
-    server = ReviewServer(on_export=desktop.copy_image)
-    server.start()
-    watcher = FolderWatcher(folder)
-    print(f"watching {folder} (Ctrl-C to stop)")
-    try:
-        while True:
-            for path in watcher.poll():
-                handle(path, ocr, classifier, server, desktop, quiet)
-            time.sleep(interval)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        server.stop()
+
+    stop_on_signals()
+    restore_thumbnail = desktop.disable_screenshot_thumbnail()
+    print("turned off the screenshot floating thumbnail (restored when Squint exits)")
+    with tempfile.TemporaryDirectory(prefix="squint-") as tmp:  # created 0700
+        clipboard = make_clipboard(Path(tmp))
+        server = ReviewServer(on_export=clipboard.copy, live=True)
+        server.start()
+        ui = launch_ui(server.url)
+        folder_watcher = FolderWatcher(folder)
+        print(f"watching {folder} and the clipboard (Ctrl-C to stop)")
+        try:
+            while True:
+                for path in folder_watcher.poll():
+                    handle(path, "file", ocr, classifier, server, desktop, quiet)
+                for path in clipboard.poll():
+                    handle(path, "clipboard", ocr, classifier, server, desktop, quiet)
+                time.sleep(interval)
+        except KeyboardInterrupt:
+            pass
+        finally:
+            restore_thumbnail()
+            if ui is not None:
+                ui.terminate()
+            clipboard.close()
+            server.stop()

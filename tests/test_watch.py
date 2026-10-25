@@ -1,8 +1,10 @@
 import subprocess
 from pathlib import Path
 
+import pytest
 from PIL import Image
 
+from squint import watch
 from squint.core.classify import Verdicts
 from squint.core.types import BBox, OcrLine, OcrWord
 from squint.server import ReviewServer
@@ -99,6 +101,7 @@ def test_handle_clean_screenshot_notifies_and_opens_nothing(tmp_path):
     desktop, server = FakeDesktop(), ReviewServer()
     handle(
         shot(tmp_path),
+        "file",
         FakeOcr([OcrLine("hello", ())]),
         NoGemma(),
         server,
@@ -111,21 +114,31 @@ def test_handle_clean_screenshot_notifies_and_opens_nothing(tmp_path):
 
 def test_handle_clean_screenshot_quiet_mode_is_silent(tmp_path):
     desktop = FakeDesktop()
-    handle(shot(tmp_path), FakeOcr([]), NoGemma(), ReviewServer(), desktop, quiet=True)
+    handle(
+        shot(tmp_path),
+        "file",
+        FakeOcr([]),
+        NoGemma(),
+        ReviewServer(),
+        desktop,
+        quiet=True,
+    )
     assert desktop.notes == []
 
 
 def test_handle_ocr_failure_notifies(tmp_path):
     desktop = FakeDesktop()
     ocr = FakeOcr(error=subprocess.CalledProcessError(1, "squint-ocr"))
-    handle(shot(tmp_path), ocr, NoGemma(), ReviewServer(), desktop, quiet=True)
+    handle(shot(tmp_path), "file", ocr, NoGemma(), ReviewServer(), desktop, quiet=True)
     assert desktop.notes == ["Couldn't scan Screenshot.png"]
 
 
 def test_handle_findings_shows_review_and_opens_browser(tmp_path):
     desktop, server = FakeDesktop(), ReviewServer()
     line = OcrLine(f"id {FAKE_AWS}", (OcrWord(3, 23, BBox(30, 5, 200, 20)),))
-    handle(shot(tmp_path), FakeOcr([line]), NoGemma(), server, desktop, quiet=True)
+    handle(
+        shot(tmp_path), "file", FakeOcr([line]), NoGemma(), server, desktop, quiet=True
+    )
     assert server.session is not None
     assert server.session.to_json()["findings"][0]["rule"] == "aws_key"
     assert desktop.opened == [server.url]
@@ -135,5 +148,94 @@ def test_handle_does_not_reopen_browser_when_page_is_open(tmp_path):
     desktop, server = FakeDesktop(), ReviewServer()
     server.last_poll = float("inf")
     line = OcrLine(f"id {FAKE_AWS}", (OcrWord(3, 23, BBox(30, 5, 200, 20)),))
-    handle(shot(tmp_path), FakeOcr([line]), NoGemma(), server, desktop, quiet=True)
+    handle(
+        shot(tmp_path), "file", FakeOcr([line]), NoGemma(), server, desktop, quiet=True
+    )
     assert desktop.opened == []
+
+
+def test_clean_clipboard_image_is_deleted_silently(tmp_path):
+    desktop = FakeDesktop()
+    path = shot(tmp_path)
+    handle(
+        path, "clipboard", FakeOcr([]), NoGemma(), ReviewServer(), desktop, quiet=False
+    )
+    assert not path.exists()
+    assert desktop.notes == []
+
+
+def test_flagged_clipboard_image_is_copied_redacted_in_live_mode(tmp_path):
+    copied = []
+    server = ReviewServer(on_export=copied.append, live=True)
+    server.last_poll = float("inf")
+    line = OcrLine(f"id {FAKE_AWS}", (OcrWord(3, 23, BBox(30, 5, 200, 20)),))
+    path = shot(tmp_path)
+    handle(path, "clipboard", FakeOcr([line]), NoGemma(), server, FakeDesktop(), True)
+    assert [p.name for p in copied] == ["Screenshot.redacted.png"]
+    assert server.session.to_json()["source"] == "clipboard"
+
+
+def test_findings_all_dismissed_by_classifier_count_as_clean(tmp_path):
+    class Lenient:
+        def judge_all(self, candidates):
+            return Verdicts({c.id: False for c in candidates}, False)
+
+    desktop, server = FakeDesktop(), ReviewServer()
+    line = OcrLine("DB_PASSWORD=hunter2-FAKE", (OcrWord(0, 24, BBox(0, 0, 9, 9)),))
+    handle(shot(tmp_path), "file", FakeOcr([line]), Lenient(), server, desktop, True)
+    assert server.session is None and desktop.opened == []
+
+
+def test_run_restores_thumbnail_and_stops_ui_on_exit(tmp_path, monkeypatch):
+    class OfflineClassifier:
+        def warm_up(self):
+            return False
+
+    class StopClipboard:
+        closed = False
+
+        def __init__(self, folder):
+            assert folder.is_dir()
+
+        def poll(self):
+            raise KeyboardInterrupt
+
+        def copy(self, path):
+            pass
+
+        def close(self):
+            StopClipboard.closed = True
+
+    class Ui:
+        terminated = False
+
+        def terminate(self):
+            Ui.terminated = True
+
+    restored = []
+
+    class RunDesktop(FakeDesktop):
+        def screenshot_dir(self):
+            return tmp_path
+
+        def disable_screenshot_thumbnail(self):
+            return lambda: restored.append(True)
+
+    monkeypatch.setattr(watch, "OllamaClassifier", OfflineClassifier)
+    watch.run(FakeOcr([]), RunDesktop(), StopClipboard, lambda url: Ui())
+    assert restored == [True]
+    assert Ui.terminated and StopClipboard.closed
+
+
+def test_stop_on_signals_turns_sigterm_and_sighup_into_keyboard_interrupt():
+    import signal
+
+    saved = {s: signal.getsignal(s) for s in (signal.SIGTERM, signal.SIGHUP)}
+    try:
+        watch.stop_on_signals()
+        for sig in saved:
+            with pytest.raises(KeyboardInterrupt):
+                signal.getsignal(sig)(sig, None)
+    finally:
+        for sig, handler in saved.items():
+            signal.signal(sig, handler)

@@ -1,6 +1,7 @@
 """Command-line entry point: squint check <image> | squint watch."""
 
 import argparse
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -10,6 +11,8 @@ from squint.core.classify import OllamaClassifier
 from squint.core.pipeline import analyze, mask
 from squint.core.redact import STYLES
 from squint.core.review import ReviewSession
+from squint.platforms.macos import review_app
+from squint.platforms.macos.clipboard import ClipboardWatcher
 from squint.platforms.macos.desktop import MacDesktop
 from squint.platforms.macos.ocr import MacOcrEngine
 
@@ -43,7 +46,17 @@ def check(path: Path, style: str) -> int:
     return 0
 
 
+def launch_review_app(url: str) -> subprocess.Popen | None:
+    """Start the native app; None means fall back to the web page."""
+    try:
+        return review_app.launch(url)
+    except (OSError, subprocess.CalledProcessError) as error:
+        print(f"native app unavailable ({error}); using the web page instead")
+        return None
+
+
 def main(argv: list[str] | None = None) -> int:
+    sys.stdout.reconfigure(line_buffering=True)  # progress shows up live when piped
     parser = argparse.ArgumentParser(prog="squint")
     sub = parser.add_subparsers(dest="command", required=True)
     check_cmd = sub.add_parser("check", help="scan one screenshot")
@@ -55,7 +68,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
     if args.command == "watch":
-        watch.run(MacOcrEngine(), MacDesktop(), quiet=args.quiet)
+        watch.run(
+            MacOcrEngine(),
+            MacDesktop(),
+            make_clipboard=ClipboardWatcher,
+            launch_ui=launch_review_app,
+            quiet=args.quiet,
+        )
         return 0
     return check(args.image, args.style)
 
