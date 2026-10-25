@@ -17,9 +17,11 @@ from urllib.parse import parse_qs, urlparse
 
 from squint.core.redact import STYLES
 from squint.core.review import ReviewSession
+from squint.core.types import BBox
 
 PAGE = Path(__file__).with_name("web") / "review.html"
 TOGGLE = re.compile(r"^/api/findings/(\d+)/toggle$")
+REMOVE_BOX = re.compile(r"^/api/boxes/(\d+)/delete$")
 # The page polls /api/version every second; silence for longer means no tab is open.
 PAGE_TIMEOUT_SECONDS = 3.0
 
@@ -107,6 +109,12 @@ def _handler_for(server: ReviewServer) -> type[BaseHTTPRequestHandler]:
         def _error(self, status, message: str) -> None:
             self._json({"error": message}, status)
 
+        def _recopy(self, session: ReviewSession) -> dict:
+            """In live mode every change goes straight to the clipboard."""
+            if not server.live:
+                return {}
+            return {"copied": server.export_and_copy(session)[1]}
+
         def do_GET(self):
             if not self._authorised():
                 return self._error(HTTPStatus.FORBIDDEN, "forbidden")
@@ -125,9 +133,13 @@ def _handler_for(server: ReviewServer) -> type[BaseHTTPRequestHandler]:
             if path == "/api/findings":
                 return self._json(session.to_json())
             if path == "/api/image":
-                return self._send(
-                    HTTPStatus.OK, session.image_path.read_bytes(), "image/png"
-                )
+                view = parse_qs(urlparse(self.path).query).get("view", [""])[0]
+                if view == "redacted":  # exactly what is (or would be) on the clipboard
+                    with server.lock:
+                        image = session.export()
+                else:
+                    image = session.image_path
+                return self._send(HTTPStatus.OK, image.read_bytes(), "image/png")
             return self._error(HTTPStatus.NOT_FOUND, "not found")
 
         def do_POST(self):
@@ -151,9 +163,24 @@ def _handler_for(server: ReviewServer) -> type[BaseHTTPRequestHandler]:
                     except KeyError:
                         return self._error(HTTPStatus.NOT_FOUND, "unknown finding")
                     reply = {"id": int(match.group(1)), "flagged": flagged}
-                    if server.live:
-                        reply["copied"] = server.export_and_copy(session)[1]
-                    return self._json(reply)
+                    return self._json(reply | self._recopy(session))
+                if path == "/api/boxes":
+                    try:
+                        box = BBox(
+                            *(float(body[k]) for k in ("x", "y", "width", "height"))
+                        )
+                        box_id = session.add_box(box)
+                    except (KeyError, TypeError, ValueError):
+                        return self._error(HTTPStatus.BAD_REQUEST, "invalid box")
+                    return self._json({"id": box_id, **self._recopy(session)})
+                if match := REMOVE_BOX.match(path):
+                    try:
+                        session.remove_box(int(match.group(1)))
+                    except KeyError:
+                        return self._error(HTTPStatus.NOT_FOUND, "unknown box")
+                    return self._json(
+                        {"id": int(match.group(1)), **self._recopy(session)}
+                    )
                 if path in ("/api/style", "/api/export"):
                     style = body.get("style", session.style)
                     if style not in STYLES:

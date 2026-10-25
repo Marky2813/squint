@@ -184,3 +184,46 @@ def test_export_uses_session_style_by_default(server):
     request(server, "POST", "/api/style", body='{"style": "solid"}')
     status, body = request(server, "POST", "/api/export", body="{}")
     assert status == 200 and json.loads(body)["style"] == "solid"
+
+
+BOX = '{"x": 50, "y": 20, "width": 20, "height": 10}'
+
+
+def test_live_draw_box_recopies_and_lists_it(live_server):
+    status, body = request(live_server, "POST", "/api/boxes", body=BOX)
+    assert status == 200 and json.loads(body) == {"id": 0, "copied": True}
+    assert len(live_server.exported) == 2
+    _, findings = request(live_server, "GET", "/api/findings")
+    assert json.loads(findings)["boxes"][0]["x"] == 50
+
+
+def test_live_remove_box_recopies(live_server):
+    request(live_server, "POST", "/api/boxes", body=BOX)
+    status, body = request(live_server, "POST", "/api/boxes/0/delete", body="{}")
+    assert status == 200 and json.loads(body)["copied"] is True
+    assert live_server.session.boxes == {}
+    assert len(live_server.exported) == 3
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        '{"x": 1}',
+        '{"x": "a", "y": 0, "width": 1, "height": 1}',
+        BOX.replace("50", "500"),
+    ],
+)
+def test_invalid_box_is_rejected(server, body):
+    status, _ = request(server, "POST", "/api/boxes", body=body)
+    assert status == 400
+
+
+def test_remove_unknown_box_is_404(server):
+    status, _ = request(server, "POST", "/api/boxes/7/delete", body="{}")
+    assert status == 404
+
+
+def test_redacted_view_serves_current_redaction(server):
+    _, original = request(server, "GET", "/api/image")
+    status, redacted = request(server, "GET", "/api/image?view=redacted")
+    assert status == 200 and redacted.startswith(b"\x89PNG") and redacted != original
