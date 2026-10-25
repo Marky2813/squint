@@ -12,6 +12,18 @@
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
     <string>0.1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.utilities</string>
+    <key>NSDesktopFolderUsageDescription</key>
+    <string>Squint checks new screenshots saved to your Desktop for private details.</string>
+    <key>NSDocumentsFolderUsageDescription</key>
+    <string>Squint checks new screenshots saved to your Documents folder for private details.</string>
+    <key>NSDownloadsFolderUsageDescription</key>
+    <string>Squint checks new screenshots saved to your Downloads folder for private details.</string>
     <key>LSUIElement</key>
     <true/>
     <key>NSHighResolutionCapable</key>
