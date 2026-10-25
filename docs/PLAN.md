@@ -75,10 +75,17 @@ Screenshot → OCR → regex candidates → local Gemma judgement → user revie
 
 | Result | Behaviour |
 |---|---|
-| No findings | Silent (optional "✓ clean" notification) |
-| Findings | Open the review window |
+| No findings | Silent for clipboard images; optional "✓ clean" notification for saved files (off with `--quiet`) |
+| Findings | Redacted copy goes to the clipboard and a toast appears; click it to review |
 | Gemma offline or timed out | Flag all ambiguous candidates and show a "classifier offline" banner |
 | OCR failed | "Couldn't scan" notification, no window |
+
+### Zero-click flow (decided 2026-10-25 after first user test)
+- **Inputs:** saved screenshots (folder watch) **and every new image on the clipboard** (covers ⌃⇧⌘4). A Swift helper polls `NSPasteboard`; Squint's own writes carry a private `dev.squint.redacted` type so they are never rescanned. Clipboard images live in a 0700 temp dir; clean ones are deleted immediately.
+- **Clipboard:** as soon as a scan flags anything, the redacted image (default `pixelate`) replaces the clipboard. Every toggle or style change in review re-exports and re-copies (`ReviewServer(live=True)`).
+- **Floating thumbnail:** `squint watch` turns it off at start (it delays the file ~5 s) and restores the original value on exit, including on SIGTERM/SIGHUP. The original is saved to `~/.cache/squint/thumbnail-original.json` first, so a crashed run still restores the true value next time.
+- **Alert:** native background app (`LSUIElement`, built with `swiftc`, no Xcode). A non-activating toast at the top right ("N sensitive items hidden · click to review") hides after 6 s. Clicking opens a small review window (screenshot with clickable boxes, list, style picker). The web page remains the fallback if the app can't launch.
+- Measured: copy screenshot → redacted copy on clipboard **1.56 s**; startup 2.6 s once helpers are compiled.
 
 ### Squint's own leak rules
 - Never log OCR text, candidate values, or prompts.
