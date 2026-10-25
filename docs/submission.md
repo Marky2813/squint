@@ -11,7 +11,11 @@ tags: hacktoberfest, devchallenge, gemma, opensource
 
 I do almost everything with AI now. Debugging, emails, forms, a weird error in a dashboard: I take a screenshot and paste it into a chat. It's the laziest, fastest way to explain anything.
 
-It's also how I keep leaking things. An email address in the corner of a page. A phone number in a form. An API key sitting in a terminal I didn't bother to crop. By the time I notice, the screenshot is on someone else's server.
+It's also how I keep leaking things, and never in the part I meant to share. When I screenshot a CSS bug, I look at the bug. I don't look at the corners: the "Signed in as" email in the header, the text message that slid in from my mom with her new number, the API key in the terminal tab behind it. By the time I notice, the screenshot is on someone else's server.
+
+This isn't just me. In 2023 Samsung engineers pasted internal source code into ChatGPT, and the company restricted generative AI at work. Most leaks aren't dramatic; they're just *in the corner*.
+
+**You checked the bug. Did you check the corners?**
 
 **Squint** is a tiny macOS menu bar app that checks every screenshot *before* it goes anywhere. Take a screenshot like you always do. If it contains a password, key, token, email, phone or card number, a banner slides in:
 
@@ -33,6 +37,8 @@ It's lazy on the inside too. Gemma is the sloth of the pipeline: fast pattern ru
 <!-- Embed the video: {% embed https://mysquint.tech/demo.mp4 %} or upload it to the post -->
 
 🌐 **[mysquint.tech](https://mysquint.tech)**: download for macOS (Apple Silicon and Intel, macOS 14+)
+
+The video practises what it preaches. It's written in code with Remotion, the redaction in it is Squint's real output, and the voice is **Kokoro**, an open-weight text-to-speech model running locally. Open models all the way down.
 
 1. Copy a screenshot of a `.env` file with ⌃⇧⌘4.
 2. About 1.5 seconds later, the banner appears.
