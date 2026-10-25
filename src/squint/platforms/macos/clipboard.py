@@ -9,6 +9,7 @@ from squint.platforms.macos.build import CACHE_DIR, compile_swift
 
 SOURCE = Path(__file__).with_name("clipboard.swift")
 REPLY_TIMEOUT_SECONDS = 5.0
+READY_TIMEOUT_SECONDS = 10.0
 
 
 def clipboard_binary(cache_dir: Path = CACHE_DIR) -> Path:
@@ -21,6 +22,7 @@ class ClipboardWatcher:
     def __init__(self, folder: Path, binary: Path | None = None):
         self.images: queue.Queue[Path] = queue.Queue()
         self.replies: queue.Queue[str] = queue.Queue()
+        self.ready = threading.Event()
         self.lock = threading.Lock()
         self.process = subprocess.Popen(
             [str(binary or clipboard_binary()), str(folder)],
@@ -31,11 +33,16 @@ class ClipboardWatcher:
             bufsize=1,
         )
         threading.Thread(target=self._read, daemon=True).start()
+        if not self.ready.wait(READY_TIMEOUT_SECONDS):
+            self.close()
+            raise OSError("clipboard helper did not start")
 
     def _read(self) -> None:
         for line in self.process.stdout:
             line = line.rstrip("\n")
-            if line.startswith("image "):
+            if line == "ready":
+                self.ready.set()
+            elif line.startswith("image "):
                 self.images.put(Path(line[len("image ") :]))
             elif line in ("copied", "error"):
                 self.replies.put(line)

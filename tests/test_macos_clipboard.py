@@ -32,7 +32,6 @@ def wait_for(watcher, seconds=3.0):
 def watcher(tmp_path):
     (tmp_path / "clips").mkdir()
     w = ClipboardWatcher(tmp_path / "clips", clipboard_binary(tmp_path / "cache"))
-    time.sleep(0.3)
     yield w
     w.close()
 
@@ -68,6 +67,10 @@ def test_copy_missing_file_raises(tmp_path, watcher):
 def test_copy_rejects_newline_paths(tmp_path, watcher):
     with pytest.raises(OSError):
         watcher.copy(tmp_path / "bad\nname.png")
+
+
+def test_constructor_waits_until_helper_is_watching(watcher):
+    assert watcher.ready.is_set()
 
 
 def test_helper_exits_when_closed(watcher):

@@ -1,7 +1,8 @@
 // Squint clipboard helper: reports new clipboard images and writes redacted ones back.
 //
 // Usage: squint-clip <dir>
-// stdout: "image <path>" for each new image placed on the clipboard (saved as PNG in <dir>)
+// stdout: "ready" once watching (images copied before this are not reported)
+//         "image <path>" for each new image placed on the clipboard (saved as PNG in <dir>)
 //         "copied" / "error" in reply to a copy command
 // stdin:  "copy <path>" puts that PNG on the clipboard, tagged so it is never re-reported.
 // The helper exits when stdin closes, so it never outlives the Python process.
@@ -59,4 +60,5 @@ Thread {
 }.start()
 
 Timer.scheduledTimer(withTimeInterval: 0.15, repeats: true) { _ in check() }
+print("ready")
 RunLoop.main.run()
