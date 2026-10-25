@@ -4,14 +4,15 @@ Screenshot → OCR → regex candidates → local Gemma judgement → user revie
 
 ## Performance budget
 
-**2 s p95** from the screenshot file appearing to the review data being ready (full pipeline, all verdicts final). Measured by a benchmark script over `eval/`, not in pytest.
+**Target ~2 s** (soft; slightly over is acceptable) from the screenshot file appearing to the review data being ready (full pipeline, all verdicts final). Measured by a benchmark script over `eval/`, not in pytest.
 
-| Stage | Estimate |
+| Stage | Estimate / measured |
 |---|---|
 | File settle debounce | ~0.1 s |
-| Vision OCR (accurate) | 0.3–0.8 s |
+| Vision OCR (accurate) | 0.3–0.8 s (estimate) |
 | Regex | ~0 |
-| Gemma, one warm batched call | 0.3–0.8 s |
+| Gemma, 4 parallel single-candidate calls, warm | 1.30 s median, 2.12 s p90 (measured, gemma3:4b) |
+| Gemma, cold model load | ~4.7 s (measured), so warm at launch |
 
 ## Pipeline
 
@@ -37,14 +38,18 @@ Screenshot → OCR → regex candidates → local Gemma judgement → user revie
 | `password=` / `secret:` / `token=` assignments | ambiguous → Gemma |
 | Email addresses | ambiguous → Gemma |
 | Phone numbers | ambiguous → Gemma |
-| Known placeholders (`xxxx`, `<your-key>`, `example.com`, …) | benign (dropped) |
+| `Authorization: Bearer …` values | sensitive |
+| Known placeholders (`xxxx`, `<your-key>`, `changeme`, …) | benign (dropped) |
+| Generic/reserved emails (`noreply@`, `no-reply@`, `support@`, `info@`, `example.com/.org/.net`) | benign (dropped) |
+| UUIDs, 40-hex after `commit`/`Merge`, `sha256:` digests | benign (dropped) |
 | IP addresses | out of scope for v1 |
 
 ### Classification (Gemma via Ollama)
-- HTTP to Ollama, **host locked to `127.0.0.1`**. Model kept warm (`keep_alive`, warm-up at launch). Use the smallest Gemma that passes the eval.
-- **One batched call** per screenshot for ambiguous candidates, **max 8**. Overflow is flagged without asking Gemma.
-- Each candidate: `id`, matched value, regex rule, ±1 line of OCR context (≤200 chars).
-- Output: JSON array of `{"id", "sensitive", "category", "confidence", "reason"}`. `temperature: 0`, `format: "json"`, low `num_predict`. The reason never repeats the value.
+- HTTP to Ollama, **host locked to `127.0.0.1`**. Model **`gemma3:4b`** (`gemma3:1b` scored 43% on a 14-case smoke test). Kept warm (`keep_alive`, warm-up at launch).
+- Ollama must run with **`OLLAMA_NUM_PARALLEL` ≥ 4**; without it, parallel calls are serialised.
+- **One call per ambiguous candidate, run in parallel, max 4 per screenshot.** Overflow is flagged without asking Gemma.
+- Prompt: fixed instructions + ~8 few-shot examples + one candidate (`id`, matched value, regex rule, ±1 line of OCR context ≤200 chars). Without the examples, single-candidate calls flag almost everything.
+- Output: JSON schema `{"c<id>": boolean}` with the key required. `temperature: 0`, low `num_predict`. No category/confidence/reason: they cost ~2.5 s of generation, and the category comes from the regex rule.
 - **Fail-safe:** a missing id, unparseable reply, timeout, or unreachable server means **flagged**.
 - Gemma only judges candidates. It never locates text or touches files.
 
