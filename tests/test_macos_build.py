@@ -24,3 +24,15 @@ def test_any_newer_source_makes_target_stale(tmp_path):
         path.write_text("")
         os.utime(path, (t, t))
     assert is_stale(target, [a, b])
+
+
+def test_prebuilt_helper_is_used_without_compiling(tmp_path, monkeypatch):
+    from squint.platforms.macos import build
+
+    (tmp_path / "squint-ocr").write_text("")
+    monkeypatch.setenv(build.BIN_DIR_ENV, str(tmp_path))
+    monkeypatch.setattr(build.subprocess, "run", None)  # any compile attempt would fail
+    out = build.compile_swift(
+        [tmp_path / "missing.swift"], tmp_path / "cache" / "squint-ocr"
+    )
+    assert out == tmp_path / "squint-ocr"
