@@ -883,6 +883,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             connect(api)  // client of a terminal `squint watch`
             return
         }
+        // One Squint at a time (e.g. one opened from the DMG and one from Applications):
+        // two would both rewrite the clipboard. Wake the running one so it says it's on.
+        let others = NSRunningApplication.runningApplications(withBundleIdentifier: Bundle.main.bundleIdentifier ?? "")
+            .filter { $0 != .current }
+        if let running = others.first, let url = running.bundleURL {
+            let config = NSWorkspace.OpenConfiguration()
+            config.activates = false
+            NSWorkspace.shared.openApplication(at: url, configuration: config) { _, _ in exit(0) }
+            return
+        }
         setUpMenuBar()
         launchedAtLogin = Self.launchedAtLogin
         guard Engine.isBundled else {
