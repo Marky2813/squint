@@ -1,15 +1,16 @@
-"""Command-line entry point: squint check <image>."""
+"""Command-line entry point: squint check <image> | squint watch."""
 
 import argparse
 import sys
 import time
 from pathlib import Path
 
-from PIL import Image
-
+from squint import watch
 from squint.core.classify import OllamaClassifier
 from squint.core.pipeline import analyze, mask
-from squint.core.redact import STYLES, build_plan, render
+from squint.core.redact import STYLES
+from squint.core.review import ReviewSession
+from squint.platforms.macos.desktop import MacDesktop
 from squint.platforms.macos.ocr import MacOcrEngine
 
 
@@ -35,15 +36,10 @@ def check(path: Path, style: str) -> int:
         f"classify {done - ocr_done:.2f}s, total {done - started:.2f}s"
     )
 
-    boxes = [f.bbox for f in result.flagged if f.bbox is not None]
-    if not boxes:
+    if not result.flagged:
         print("nothing to redact")
         return 0
-    with Image.open(path) as image:
-        redacted = render(image, build_plan(boxes, image.size), style)
-    out = path.with_name(f"{path.stem}.redacted.png")
-    redacted.save(out)  # fresh image: no EXIF or other metadata carried over
-    print(f"wrote {out}")
+    print(f"wrote {ReviewSession(path, result).export(style)}")
     return 0
 
 
@@ -53,7 +49,14 @@ def main(argv: list[str] | None = None) -> int:
     check_cmd = sub.add_parser("check", help="scan one screenshot")
     check_cmd.add_argument("image", type=Path)
     check_cmd.add_argument("--style", choices=STYLES, default="pixelate")
+    watch_cmd = sub.add_parser("watch", help="scan new screenshots as they appear")
+    watch_cmd.add_argument(
+        "--quiet", action="store_true", help="no notification for clean screenshots"
+    )
     args = parser.parse_args(argv)
+    if args.command == "watch":
+        watch.run(MacOcrEngine(), MacDesktop(), quiet=args.quiet)
+        return 0
     return check(args.image, args.style)
 
 
