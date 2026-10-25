@@ -1,0 +1,1526 @@
+{
+  "version": 1,
+  "screenshots": {
+    "env-dark-menlo.png": {
+      "held_out": false,
+      "items": [
+        {
+          "value": "DATABASE_URL",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            40,
+            92,
+            192,
+            23
+          ]
+        },
+        {
+          "value": "maple-Velvet8419!",
+          "category": "password",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            488.0,
+            91,
+            272.0,
+            25
+          ]
+        },
+        {
+          "value": "STRIPE_SECRET_KEY",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            40,
+            138,
+            272,
+            23
+          ]
+        },
+        {
+          "value": "sk_live_FAKEtzxJ3r3JzdR6cShfjyNd",
+          "category": "stripe_key",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            328.0,
+            137,
+            512.0,
+            25
+          ]
+        },
+        {
+          "value": "JWT_ACCESS_SECRET",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            40,
+            184,
+            272,
+            23
+          ]
+        },
+        {
+          "value": "harbor-Velvet6394!",
+          "category": "password",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            344.0,
+            183,
+            288.0,
+            20
+          ]
+        },
+        {
+          "value": "SESSION_TOKEN",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            40,
+            230,
+            208,
+            23
+          ]
+        },
+        {
+          "value": "758c2506ddb9f703eb7e676a6077155fb6dee17e766074a9",
+          "category": "token",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            264.0,
+            229,
+            768.0,
+            20
+          ]
+        },
+        {
+          "value": "API_KEY",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            40,
+            322,
+            112,
+            23
+          ]
+        },
+        {
+          "value": "<YOUR_API_KEY>",
+          "category": "placeholder",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            184.0,
+            322,
+            224.0,
+            23
+          ]
+        }
+      ]
+    },
+    "config-dark-menlo.png": {
+      "held_out": false,
+      "items": [
+        {
+          "value": "2.14.3",
+          "category": "version",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            216.0,
+            184,
+            96.0,
+            19
+          ]
+        },
+        {
+          "value": "access_key_id",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            72.0,
+            275,
+            208.0,
+            25
+          ]
+        },
+        {
+          "value": "AKIAFAKELUMP6XQU1RY0",
+          "category": "aws_key",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            312.0,
+            276,
+            320.0,
+            22
+          ]
+        },
+        {
+          "value": "secret_access_key",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            72.0,
+            321,
+            272.0,
+            25
+          ]
+        },
+        {
+          "value": "yOk+13bjzyqIbmpoc8WC1hio7pxKPAVj6oGualla",
+          "category": "aws_secret",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            376.0,
+            321,
+            640.0,
+            25
+          ]
+        },
+        {
+          "value": "token",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            72.0,
+            413,
+            80.0,
+            20
+          ]
+        },
+        {
+          "value": "ghp_iWyNJRElHQiE5z33RIbAdWaU1z7c5jjJBzjP",
+          "category": "github_token",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            184.0,
+            413,
+            640.0,
+            25
+          ]
+        },
+        {
+          "value": "ba88edd9-98fe-46c9-a124-13dda9587f49",
+          "category": "uuid",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            264.0,
+            459,
+            576.0,
+            20
+          ]
+        }
+      ]
+    },
+    "terminal-dark-menlo.png": {
+      "held_out": true,
+      "items": [
+        {
+          "value": "SLACK_BOT_TOKEN",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            184.0,
+            46,
+            240.0,
+            23
+          ]
+        },
+        {
+          "value": "xoxb-98777485162-FAKEZR5S3NuLs5gbBKLh",
+          "category": "slack_token",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            440.0,
+            45,
+            592.0,
+            25
+          ]
+        },
+        {
+          "value": "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdWIiOiAiMjI5NjciLCAibmFtZSI6ICJGYWtlIFVzZXIifQ.ed_0RJZerYsflo5xI8xRmaPgtETLFOMEQdrWlP52TKF",
+          "category": "jwt",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            568.0,
+            91,
+            2160.0,
+            25
+          ]
+        },
+        {
+          "value": "30c61b9e-8b5b-42b1-a4ff-df2e55cdb23a",
+          "category": "uuid",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            168.0,
+            183,
+            576.0,
+            20
+          ]
+        },
+        {
+          "value": "2db441aec2b2f11318df6f10a7ce8a74ee1b973a",
+          "category": "commit_sha",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            40,
+            275,
+            640,
+            20
+          ]
+        }
+      ]
+    },
+    "chat-dark-menlo.png": {
+      "held_out": false,
+      "items": [
+        {
+          "value": "cinder-Velvet842!",
+          "category": "password",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            712.0,
+            91,
+            272.0,
+            20
+          ]
+        },
+        {
+          "value": "marco.dummond@outlook.com",
+          "category": "email",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            392.0,
+            183,
+            400.0,
+            25
+          ]
+        },
+        {
+          "value": "+1 415 596 7277",
+          "category": "phone",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            856.0,
+            184,
+            240.0,
+            19
+          ]
+        },
+        {
+          "value": "2026-10-25",
+          "category": "date",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            760.0,
+            276,
+            160.0,
+            19
+          ]
+        }
+      ]
+    },
+    "gitlog-dark-menlo.png": {
+      "held_out": false,
+      "items": [
+        {
+          "value": "2db441aec2b2f11318df6f10a7ce8a74ee1b973a",
+          "category": "commit_sha",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            152.0,
+            45,
+            640.0,
+            20
+          ]
+        },
+        {
+          "value": "tomas.samplesen@fastmail.com",
+          "category": "email",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            440.0,
+            91,
+            448.0,
+            25
+          ]
+        },
+        {
+          "value": "noreply@github.com",
+          "category": "generic_email",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            440.0,
+            321,
+            288.0,
+            25
+          ]
+        }
+      ]
+    },
+    "readme-dark-menlo.png": {
+      "held_out": false,
+      "items": [
+        {
+          "value": "STRIPE_KEY",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            152.0,
+            138,
+            160.0,
+            23
+          ]
+        },
+        {
+          "value": "sk_test_xxxxxxxxxxxx",
+          "category": "placeholder",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            328.0,
+            137,
+            320.0,
+            24
+          ]
+        },
+        {
+          "value": "support@example.com",
+          "category": "generic_email",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            184.0,
+            183,
+            304.0,
+            25
+          ]
+        },
+        {
+          "value": "25929111-8b16-4cae-aa7c-770a29f5542c",
+          "category": "uuid",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            392.0,
+            229,
+            576.0,
+            20
+          ]
+        }
+      ]
+    },
+    "dashboard-dark-menlo.png": {
+      "held_out": true,
+      "items": [
+        {
+          "value": "tomas.samplesen@fastmail.com",
+          "category": "email",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            376.0,
+            137,
+            448.0,
+            25
+          ]
+        },
+        {
+          "value": "4114 9823 4967 8783",
+          "category": "card",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            920.0,
+            138,
+            304.0,
+            19
+          ]
+        },
+        {
+          "value": "marco.dummond@outlook.com",
+          "category": "email",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            344.0,
+            183,
+            400.0,
+            25
+          ]
+        },
+        {
+          "value": "4787 7665 7109 1526",
+          "category": "card",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            840.0,
+            184,
+            304.0,
+            19
+          ]
+        },
+        {
+          "value": "4242 4242 4242 4242",
+          "category": "test_card",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            328.0,
+            230,
+            304.0,
+            19
+          ]
+        }
+      ]
+    },
+    "clean-dark-menlo.png": {
+      "held_out": false,
+      "items": []
+    },
+    "env-light-sfmono.png": {
+      "held_out": false,
+      "items": [
+        {
+          "value": "DATABASE_URL",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            40,
+            94,
+            192,
+            22
+          ]
+        },
+        {
+          "value": "tulip-Orbit8375!",
+          "category": "password",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            488.0,
+            92,
+            256.0,
+            25
+          ]
+        },
+        {
+          "value": "STRIPE_SECRET_KEY",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            40,
+            140,
+            272,
+            22
+          ]
+        },
+        {
+          "value": "sk_live_FAKEKoygWHDMpjhrPdM0gujZ",
+          "category": "stripe_key",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            328.0,
+            137,
+            512.0,
+            26
+          ]
+        },
+        {
+          "value": "JWT_ACCESS_SECRET",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            40,
+            186,
+            272,
+            22
+          ]
+        },
+        {
+          "value": "maple-cinder2366!",
+          "category": "password",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            344.0,
+            184,
+            272.0,
+            25
+          ]
+        },
+        {
+          "value": "SESSION_TOKEN",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            40,
+            232,
+            208,
+            22
+          ]
+        },
+        {
+          "value": "5adbc8a98b746e5f0dd5aab08c5cd131994ec8075ebe70a9",
+          "category": "token",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            264.0,
+            230,
+            768.0,
+            20
+          ]
+        },
+        {
+          "value": "API_KEY",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            40,
+            324,
+            112,
+            22
+          ]
+        },
+        {
+          "value": "<YOUR_API_KEY>",
+          "category": "placeholder",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            184.0,
+            324,
+            224.0,
+            22
+          ]
+        }
+      ]
+    },
+    "config-light-sfmono.png": {
+      "held_out": false,
+      "items": [
+        {
+          "value": "2.14.3",
+          "category": "version",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            216.0,
+            186,
+            96.0,
+            18
+          ]
+        },
+        {
+          "value": "access_key_id",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            72.0,
+            276,
+            208.0,
+            25
+          ]
+        },
+        {
+          "value": "AKIAFAKEOCZUQOTC0XB1",
+          "category": "aws_key",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            312.0,
+            278,
+            320.0,
+            20
+          ]
+        },
+        {
+          "value": "secret_access_key",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            72.0,
+            322,
+            272.0,
+            25
+          ]
+        },
+        {
+          "value": "ll/YZ5Nl1zZQjCvMu8uscwhmJ8cBHdwcjSbcdjti",
+          "category": "aws_secret",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            376.0,
+            321,
+            640.0,
+            25
+          ]
+        },
+        {
+          "value": "token",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            72.0,
+            414,
+            80.0,
+            20
+          ]
+        },
+        {
+          "value": "ghp_j8B3iYCAyQjer7uFV7dx4VFw0jxfIxlTfIBv",
+          "category": "github_token",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            184.0,
+            413,
+            640.0,
+            26
+          ]
+        },
+        {
+          "value": "e63184de-2ae5-4c2e-a08e-fdd38fd720ff",
+          "category": "uuid",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            264.0,
+            460,
+            576.0,
+            20
+          ]
+        }
+      ]
+    },
+    "terminal-light-sfmono.png": {
+      "held_out": false,
+      "items": [
+        {
+          "value": "SLACK_BOT_TOKEN",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            184.0,
+            48,
+            240.0,
+            22
+          ]
+        },
+        {
+          "value": "xoxb-82483720128-FAKECMMMPMYt4RTytFCm",
+          "category": "slack_token",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            440.0,
+            46,
+            592.0,
+            25
+          ]
+        },
+        {
+          "value": "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdWIiOiAiNDkyMjAiLCAibmFtZSI6ICJGYWtlIFVzZXIifQ.SoedLKosCCf7kvZdjV03x7TSLe_571CIbtQy1SYkzko",
+          "category": "jwt",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            568.0,
+            91,
+            2160.0,
+            26
+          ]
+        },
+        {
+          "value": "678bf643-820d-47fd-abc6-da3da1fc4782",
+          "category": "uuid",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            168.0,
+            184,
+            576.0,
+            20
+          ]
+        },
+        {
+          "value": "881b77d7551768650f6abfee7554feabc7914cb9",
+          "category": "commit_sha",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            40,
+            276,
+            640,
+            20
+          ]
+        }
+      ]
+    },
+    "chat-light-sfmono.png": {
+      "held_out": false,
+      "items": [
+        {
+          "value": "Quartz-tulip6802!",
+          "category": "password",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            712.0,
+            92,
+            272.0,
+            25
+          ]
+        },
+        {
+          "value": "sana.dummond@fastmail.com",
+          "category": "email",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            392.0,
+            184,
+            400.0,
+            24
+          ]
+        },
+        {
+          "value": "+1 415 582 6096",
+          "category": "phone",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            856.0,
+            186,
+            240.0,
+            18
+          ]
+        },
+        {
+          "value": "2026-10-25",
+          "category": "date",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            760.0,
+            278,
+            160.0,
+            18
+          ]
+        }
+      ]
+    },
+    "gitlog-light-sfmono.png": {
+      "held_out": false,
+      "items": [
+        {
+          "value": "881b77d7551768650f6abfee7554feabc7914cb9",
+          "category": "commit_sha",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            152.0,
+            46,
+            640.0,
+            20
+          ]
+        },
+        {
+          "value": "marco.dummond@outlook.com",
+          "category": "email",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            408.0,
+            92,
+            400.0,
+            24
+          ]
+        },
+        {
+          "value": "noreply@github.com",
+          "category": "generic_email",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            440.0,
+            322,
+            288.0,
+            25
+          ]
+        }
+      ]
+    },
+    "readme-light-sfmono.png": {
+      "held_out": false,
+      "items": [
+        {
+          "value": "STRIPE_KEY",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            152.0,
+            140,
+            160.0,
+            22
+          ]
+        },
+        {
+          "value": "sk_test_xxxxxxxxxxxx",
+          "category": "placeholder",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            328.0,
+            138,
+            320.0,
+            24
+          ]
+        },
+        {
+          "value": "support@example.com",
+          "category": "generic_email",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            184.0,
+            184,
+            304.0,
+            25
+          ]
+        },
+        {
+          "value": "bf91ae8b-deff-48a0-a808-c693f36071fa",
+          "category": "uuid",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            392.0,
+            230,
+            576.0,
+            20
+          ]
+        }
+      ]
+    },
+    "dashboard-light-sfmono.png": {
+      "held_out": true,
+      "items": [
+        {
+          "value": "marco.dummond@outlook.com",
+          "category": "email",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            344.0,
+            138,
+            400.0,
+            24
+          ]
+        },
+        {
+          "value": "4646 8179 9401 6201",
+          "category": "card",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            840.0,
+            140,
+            304.0,
+            18
+          ]
+        },
+        {
+          "value": "sana.dummond@fastmail.com",
+          "category": "email",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            328.0,
+            184,
+            400.0,
+            24
+          ]
+        },
+        {
+          "value": "4286 1873 8588 9474",
+          "category": "card",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            824.0,
+            186,
+            304.0,
+            18
+          ]
+        },
+        {
+          "value": "4242 4242 4242 4242",
+          "category": "test_card",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            328.0,
+            232,
+            304.0,
+            18
+          ]
+        }
+      ]
+    },
+    "clean-light-sfmono.png": {
+      "held_out": true,
+      "items": []
+    },
+    "env-light-helvetica.png": {
+      "held_out": false,
+      "items": [
+        {
+          "value": "DATABASE_URL",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            40,
+            88,
+            203,
+            22
+          ]
+        },
+        {
+          "value": "cinder-cinder8413!",
+          "category": "password",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            426.0,
+            88,
+            212.0,
+            20
+          ]
+        },
+        {
+          "value": "STRIPE_SECRET_KEY",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            40,
+            134,
+            278,
+            22
+          ]
+        },
+        {
+          "value": "sk_live_FAKE1OpsSV9MKvNs3O82mfPn",
+          "category": "stripe_key",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            332.0,
+            134,
+            475.0,
+            24
+          ]
+        },
+        {
+          "value": "JWT_ACCESS_SECRET",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            40,
+            180,
+            293,
+            22
+          ]
+        },
+        {
+          "value": "harbor-Orbit4153!",
+          "category": "password",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            357.0,
+            180,
+            202.0,
+            20
+          ]
+        },
+        {
+          "value": "SESSION_TOKEN",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            40,
+            226,
+            217,
+            22
+          ]
+        },
+        {
+          "value": "6628ed0bc33c7ce245e6861c7be6034648bd841f0cabc66e",
+          "category": "token",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            272.0,
+            226,
+            659.0,
+            20
+          ]
+        },
+        {
+          "value": "API_KEY",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            40,
+            318,
+            107,
+            22
+          ]
+        },
+        {
+          "value": "<YOUR_API_KEY>",
+          "category": "placeholder",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            170.0,
+            318,
+            226.0,
+            22
+          ]
+        }
+      ]
+    },
+    "config-light-helvetica.png": {
+      "held_out": false,
+      "items": [
+        {
+          "value": "2.14.3",
+          "category": "version",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            151.0,
+            181,
+            70.0,
+            19
+          ]
+        },
+        {
+          "value": "access_key_id",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            54.0,
+            272,
+            168.0,
+            24
+          ]
+        },
+        {
+          "value": "AKIAFAKESFHH67WDJIC2",
+          "category": "aws_key",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            236.0,
+            272,
+            321.0,
+            20
+          ]
+        },
+        {
+          "value": "secret_access_key",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            54.0,
+            318,
+            218.0,
+            24
+          ]
+        },
+        {
+          "value": "SeQWvgLWWa26qWI60c486Ss0aJPM/xhzVVwvIavu",
+          "category": "aws_secret",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            286.0,
+            318,
+            609.0,
+            24
+          ]
+        },
+        {
+          "value": "token",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            54.0,
+            410,
+            62.0,
+            19
+          ]
+        },
+        {
+          "value": "ghp_46L6Jj3Jzz1c855oTdND6pWkraN0Et1jub3o",
+          "category": "github_token",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            130.0,
+            410,
+            557.0,
+            24
+          ]
+        },
+        {
+          "value": "e6ac1821-f086-46fd-a4b8-4fc0e578533d",
+          "category": "uuid",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            204.0,
+            456,
+            461.0,
+            20
+          ]
+        }
+      ]
+    },
+    "terminal-light-helvetica.png": {
+      "held_out": true,
+      "items": [
+        {
+          "value": "SLACK_BOT_TOKEN",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            139.0,
+            42,
+            254.0,
+            22
+          ]
+        },
+        {
+          "value": "xoxb-47245517485-FAKEgjhl6z7spo5Li3Gf",
+          "category": "slack_token",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            408.0,
+            42,
+            490.0,
+            24
+          ]
+        },
+        {
+          "value": "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdWIiOiAiNDgzMjAiLCAibmFtZSI6ICJGYWtlIFVzZXIifQ.NqURtZdtFg_5VLrtB4L83QfLGkbtdDKdrQuVGgDR1mi",
+          "category": "jwt",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            397.0,
+            88,
+            1870.0,
+            24
+          ]
+        },
+        {
+          "value": "6572215a-cefe-405d-a34d-3c45009a3ca0",
+          "category": "uuid",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            110.0,
+            180,
+            474.0,
+            20
+          ]
+        },
+        {
+          "value": "8330bea532dd4d48d5dd370800bb6692bdf18dbd",
+          "category": "commit_sha",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            40,
+            272,
+            553,
+            20
+          ]
+        }
+      ]
+    },
+    "chat-light-helvetica.png": {
+      "held_out": false,
+      "items": [
+        {
+          "value": "harbor-Velvet3141!",
+          "category": "password",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            519.0,
+            88,
+            217.0,
+            20
+          ]
+        },
+        {
+          "value": "aiko.testova@fastmail.com",
+          "category": "email",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            284.0,
+            180,
+            307.0,
+            20
+          ]
+        },
+        {
+          "value": "+1 415 312 7599",
+          "category": "phone",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            628.0,
+            181,
+            190.0,
+            19
+          ]
+        },
+        {
+          "value": "2026-10-25",
+          "category": "date",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            521.0,
+            273,
+            130.0,
+            19
+          ]
+        }
+      ]
+    },
+    "gitlog-light-helvetica.png": {
+      "held_out": false,
+      "items": [
+        {
+          "value": "8330bea532dd4d48d5dd370800bb6692bdf18dbd",
+          "category": "commit_sha",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            131.0,
+            42,
+            553.0,
+            20
+          ]
+        },
+        {
+          "value": "leila.dummond@proton.me",
+          "category": "email",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            331.0,
+            88,
+            308.0,
+            24
+          ]
+        },
+        {
+          "value": "noreply@github.com",
+          "category": "generic_email",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            317.0,
+            318,
+            235.0,
+            24
+          ]
+        }
+      ]
+    },
+    "readme-light-helvetica.png": {
+      "held_out": false,
+      "items": [
+        {
+          "value": "STRIPE_KEY",
+          "category": "key",
+          "sensitive": false,
+          "keep_visible": true,
+          "bbox": [
+            113.0,
+            134,
+            159.0,
+            22
+          ]
+        },
+        {
+          "value": "sk_test_xxxxxxxxxxxx",
+          "category": "placeholder",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            286.0,
+            134,
+            251.0,
+            22
+          ]
+        },
+        {
+          "value": "support@example.com",
+          "category": "generic_email",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            140.0,
+            180,
+            264.0,
+            24
+          ]
+        },
+        {
+          "value": "a6454b79-7ecd-4c23-a5f4-15294df2fde1",
+          "category": "uuid",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            284.0,
+            226,
+            461.0,
+            20
+          ]
+        }
+      ]
+    },
+    "dashboard-light-helvetica.png": {
+      "held_out": false,
+      "items": [
+        {
+          "value": "leila.dummond@proton.me",
+          "category": "email",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            262.0,
+            134,
+            308.0,
+            24
+          ]
+        },
+        {
+          "value": "4250 0382 1802 5269",
+          "category": "card",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            612.0,
+            135,
+            245.0,
+            19
+          ]
+        },
+        {
+          "value": "aiko.testova@fastmail.com",
+          "category": "email",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            230.0,
+            180,
+            307.0,
+            20
+          ]
+        },
+        {
+          "value": "4626 6910 7506 7928",
+          "category": "card",
+          "sensitive": true,
+          "keep_visible": false,
+          "bbox": [
+            579.0,
+            181,
+            245.0,
+            19
+          ]
+        },
+        {
+          "value": "4242 4242 4242 4242",
+          "category": "test_card",
+          "sensitive": false,
+          "keep_visible": false,
+          "bbox": [
+            242.0,
+            227,
+            245.0,
+            18
+          ]
+        }
+      ]
+    },
+    "clean-light-helvetica.png": {
+      "held_out": false,
+      "items": []
+    }
+  }
+}
