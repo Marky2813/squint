@@ -133,3 +133,54 @@ def test_version_requires_token(server):
     status, _ = request(server, "GET", "/api/version", token="nope")
     assert status == 403
     assert not server.page_open()
+
+
+@pytest.fixture
+def live_server(tmp_path):
+    path = tmp_path / "live.png"
+    Image.new("RGB", (100, 50), "white").save(path)
+    analysis = Analysis(
+        (Finding(0, "stripe_key", "sensitive", SECRET, BBox(10, 10, 30, 10), True),),
+        False,
+    )
+    exported = []
+    srv = ReviewServer(on_export=exported.append, live=True)
+    srv.exported = exported
+    srv.show(ReviewSession(path, analysis))
+    srv.start()
+    yield srv
+    srv.stop()
+
+
+def test_live_show_copies_immediately(live_server):
+    assert [p.name for p in live_server.exported] == ["live.redacted.png"]
+
+
+def test_live_toggle_recopies(live_server):
+    status, body = request(live_server, "POST", "/api/findings/0/toggle", body="{}")
+    assert status == 200 and json.loads(body)["copied"] is True
+    assert len(live_server.exported) == 2
+
+
+def test_live_style_change_recopies(live_server):
+    status, body = request(live_server, "POST", "/api/style", body='{"style": "solid"}')
+    assert status == 200 and json.loads(body)["copied"] is True
+    assert live_server.session.style == "solid"
+    assert len(live_server.exported) == 2
+
+
+def test_style_change_without_live_does_not_export(server):
+    status, body = request(server, "POST", "/api/style", body='{"style": "blur"}')
+    assert status == 200 and json.loads(body) == {"style": "blur"}
+    assert server.exported == []
+
+
+def test_toggle_without_live_does_not_export(server):
+    request(server, "POST", "/api/findings/0/toggle", body="{}")
+    assert server.exported == []
+
+
+def test_export_uses_session_style_by_default(server):
+    request(server, "POST", "/api/style", body='{"style": "solid"}')
+    status, body = request(server, "POST", "/api/export", body="{}")
+    assert status == 200 and json.loads(body)["style"] == "solid"

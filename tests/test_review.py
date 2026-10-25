@@ -38,6 +38,8 @@ def test_to_json_shape(session):
     data = session.to_json()
     assert data["image"] == {"name": "Screenshot 1.png", "width": 100, "height": 50}
     assert data["classifier_offline"] is False
+    assert data["source"] == "file"
+    assert data["style"] == "pixelate"
     assert "pixelate" in data["styles"]
     assert data["findings"][0]["bbox"] == {"x": 10, "y": 10, "width": 30, "height": 10}
     assert data["findings"][2]["bbox"] is None
@@ -80,3 +82,15 @@ def test_export_strips_metadata(session):
     with Image.open(session.export()) as result:
         assert "exif" not in result.info
         assert "FAKE private" not in str(result.info)
+
+
+def test_set_style_changes_default_export_style(session):
+    session.set_style("solid")
+    assert session.to_json()["style"] == "solid"
+    with Image.open(session.export()) as result:
+        assert len(result.crop((10, 10, 40, 20)).getcolors()) == 1
+
+
+def test_set_style_rejects_unknown(session):
+    with pytest.raises(ValueError):
+        session.set_style("swirl")

@@ -10,9 +10,12 @@ from squint.core.redact import STYLES, build_plan, render
 
 
 class ReviewSession:
-    def __init__(self, image_path: Path, analysis: Analysis):
+    def __init__(self, image_path: Path, analysis: Analysis, source: str = "file"):
+        """source is "file" (screenshot saved to disk) or "clipboard"."""
         self.image_path = image_path
         self.analysis = analysis
+        self.source = source
+        self.style = "pixelate"
         self.flagged = {f.id: f.flagged for f in analysis.findings}
         with Image.open(image_path) as image:
             self.size = image.size
@@ -25,7 +28,9 @@ class ReviewSession:
                 "width": self.size[0],
                 "height": self.size[1],
             },
+            "source": self.source,
             "classifier_offline": self.analysis.classifier_offline,
+            "style": self.style,
             "styles": list(STYLES),
             "findings": [
                 {
@@ -47,11 +52,17 @@ class ReviewSession:
         self.flagged[finding_id] = not self.flagged[finding_id]
         return self.flagged[finding_id]
 
+    def set_style(self, style: str) -> None:
+        if style not in STYLES:
+            raise ValueError(f"unknown style {style!r}")
+        self.style = style
+
     def output_path(self) -> Path:
         return self.image_path.with_name(f"{self.image_path.stem}.redacted.png")
 
-    def export(self, style: str = "pixelate") -> Path:
+    def export(self, style: str | None = None) -> Path:
         """Write <name>.redacted.png next to the original. The original is never touched."""
+        style = style or self.style
         boxes = [
             f.bbox
             for f in self.analysis.findings

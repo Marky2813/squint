@@ -25,8 +25,18 @@ PAGE_TIMEOUT_SECONDS = 3.0
 
 
 class ReviewServer:
-    def __init__(self, on_export: Callable[[Path], None] | None = None, port: int = 0):
-        """on_export(path) runs after each export; it should raise OSError on failure."""
+    def __init__(
+        self,
+        on_export: Callable[[Path], None] | None = None,
+        port: int = 0,
+        live: bool = False,
+    ):
+        """on_export(path) runs after each export; it should raise OSError on failure.
+
+        With live=True, every new session and every change re-exports and calls on_export,
+        so the clipboard always holds the current redaction without an Export click.
+        """
+        self.live = live
         self.token = secrets.token_urlsafe(24)
         self.session: ReviewSession | None = None
         self.on_export = on_export
@@ -44,6 +54,18 @@ class ReviewServer:
         with self.lock:
             self.session = session
             self.version += 1
+            if self.live:
+                self.export_and_copy(session)
+
+    def export_and_copy(self, session: ReviewSession) -> tuple[Path, bool]:
+        out = session.export()
+        if self.on_export is None:
+            return out, False
+        try:
+            self.on_export(out)
+        except OSError:  # clipboard failure must not lose the export
+            return out, False
+        return out, True
 
     def page_open(self) -> bool:
         return time.monotonic() - self.last_poll < PAGE_TIMEOUT_SECONDS
@@ -128,20 +150,21 @@ def _handler_for(server: ReviewServer) -> type[BaseHTTPRequestHandler]:
                         flagged = session.toggle(int(match.group(1)))
                     except KeyError:
                         return self._error(HTTPStatus.NOT_FOUND, "unknown finding")
-                    return self._json({"id": int(match.group(1)), "flagged": flagged})
-                if path == "/api/export":
-                    style = body.get("style", "pixelate")
+                    reply = {"id": int(match.group(1)), "flagged": flagged}
+                    if server.live:
+                        reply["copied"] = server.export_and_copy(session)[1]
+                    return self._json(reply)
+                if path in ("/api/style", "/api/export"):
+                    style = body.get("style", session.style)
                     if style not in STYLES:
                         return self._error(HTTPStatus.BAD_REQUEST, "unknown style")
-                    out = session.export(style)
-                    copied = False
-                    if server.on_export:
-                        try:
-                            server.on_export(out)
-                            copied = True
-                        except OSError:  # clipboard failure must not lose the export
-                            copied = False
-                    return self._json({"path": str(out), "copied": copied})
+                    session.set_style(style)
+                    if path == "/api/style" and not server.live:
+                        return self._json({"style": style})
+                    out, copied = server.export_and_copy(session)
+                    return self._json(
+                        {"style": style, "path": str(out), "copied": copied}
+                    )
             return self._error(HTTPStatus.NOT_FOUND, "not found")
 
     return Handler
