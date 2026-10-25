@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Squint review</title>
+<style>
+  :root {
+    --bg: #f6f6f4; --panel: #ffffff; --text: #1d1d1b; --muted: #6b6b66; --line: #e2e2dc;
+    --flag: #d6452b; --flag-fill: rgba(214, 69, 43, .18); --off: #8a8a84; --off-fill: rgba(138, 138, 132, .10);
+    --accent: #1d1d1b; --accent-text: #ffffff; --warn-bg: #fff1d6; --warn-text: #6b4a00;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161615; --panel: #1f1f1d; --text: #ecece8; --muted: #9a9a93; --line: #33332f;
+      --flag: #ff7a5c; --flag-fill: rgba(255, 122, 92, .22); --off: #8a8a84; --off-fill: rgba(138, 138, 132, .12);
+      --accent: #ecece8; --accent-text: #161615; --warn-bg: #3a2e12; --warn-text: #f3d48a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif; }
+  header { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--line); }
+  header h1 { font-size: 15px; margin: 0; font-weight: 600; }
+  header .name { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .spacer { flex: 1; }
+  select, button { font: inherit; border-radius: 7px; border: 1px solid var(--line); padding: 6px 10px;
+                   background: var(--panel); color: var(--text); }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
+  button:disabled { opacity: .5; }
+  .banner { margin: 12px 20px 0; padding: 10px 12px; border-radius: 8px; background: var(--warn-bg); color: var(--warn-text); }
+  main { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; padding: 20px; }
+  @media (max-width: 800px) { main { grid-template-columns: 1fr; } }
+  .stage { position: relative; align-self: start; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--panel); }
+  .stage img { display: block; width: 100%; height: auto; }
+  .box { position: absolute; border: 2px solid var(--flag); background: var(--flag-fill); border-radius: 3px; cursor: pointer; }
+  .box.off { border-color: var(--off); border-style: dashed; background: var(--off-fill); }
+  .box:hover { outline: 2px solid var(--text); outline-offset: 1px; }
+  aside { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px; align-self: start; }
+  .finding { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 6px; cursor: pointer; }
+  .finding:hover { background: var(--bg); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--flag); flex: none; }
+  .finding.off .dot { background: transparent; border: 2px solid var(--off); }
+  .finding .rule { font-weight: 600; }
+  .finding .preview { color: var(--muted); font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+  .finding.off .rule { color: var(--muted); text-decoration: line-through; }
+  .empty, .note { color: var(--muted); padding: 10px; }
+  .status { color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Squint</h1>
+  <span class="name" id="name"></span>
+  <span class="spacer"></span>
+  <span class="status" id="status" role="status"></span>
+  <label>Style <select id="style"></select></label>
+  <button class="primary" id="export">Export redacted</button>
+</header>
+<div class="banner" id="offline" hidden>Classifier offline: every uncertain match is flagged. Review carefully.</div>
+<main>
+  <div class="stage" id="stage"><img id="shot" alt="Screenshot under review"></div>
+  <aside>
+    <div id="list"></div>
+    <div class="note">Click a box or row to flag or dismiss it. The original file stays on disk unchanged.</div>
+  </aside>
+</main>
+<script>
+const token = new URLSearchParams(location.search).get("t");
+const api = (path) => `${path}?t=${encodeURIComponent(token)}`;
+let state = null;
+let version = -1;
+
+async function poll() {
+  try {
+    const res = await fetch(api("/api/version"));
+    const data = await res.json();
+    if (data.version !== version) { version = data.version; await load(); }
+  } catch { /* server stopped; keep showing the last state */ }
+}
+
+async function load() {
+  const res = await fetch(api("/api/findings"));
+  if (!res.ok) { document.getElementById("status").textContent = "Nothing to review"; return; }
+  state = await res.json();
+  document.getElementById("name").textContent = state.image.name;
+  document.getElementById("offline").hidden = !state.classifier_offline;
+  const style = document.getElementById("style");
+  style.replaceChildren(...state.styles.map((s) => new Option(s, s)));
+  document.getElementById("shot").src = api("/api/image") + `&v=${version}`;
+  render();
+}
+
+function render() {
+  const stage = document.getElementById("stage");
+  stage.querySelectorAll(".box").forEach((b) => b.remove());
+  const list = document.getElementById("list");
+  list.replaceChildren();
+  const { width, height } = state.image;
+  for (const f of state.findings) {
+    if (f.bbox) {
+      const box = document.createElement("div");
+      box.className = "box" + (f.flagged ? "" : " off");
+      box.style.left = `${(f.bbox.x / width) * 100}%`;
+      box.style.top = `${(f.bbox.y / height) * 100}%`;
+      box.style.width = `${(f.bbox.width / width) * 100}%`;
+      box.style.height = `${(f.bbox.height / height) * 100}%`;
+      box.title = `${f.rule}: ${f.flagged ? "will be redacted" : "dismissed"}`;
+      box.onclick = () => toggle(f.id);
+      stage.appendChild(box);
+    }
+    const row = document.createElement("div");
+    row.className = "finding" + (f.flagged ? "" : " off");
+    row.innerHTML = `<span class="dot"></span><span><div class="rule"></div><div class="preview"></div></span>`;
+    row.querySelector(".rule").textContent = f.rule.replaceAll("_", " ");
+    row.querySelector(".preview").textContent = f.preview;
+    row.onclick = () => toggle(f.id);
+    list.appendChild(row);
+  }
+  if (!state.findings.length) list.innerHTML = `<div class="empty">No sensitive text found.</div>`;
+  const count = state.findings.filter((f) => f.flagged).length;
+  document.getElementById("status").textContent = `${count} to redact`;
+}
+
+async function toggle(id) {
+  const res = await fetch(api(`/api/findings/${id}/toggle`), { method: "POST", body: "{}" });
+  if (!res.ok) return;
+  const { flagged } = await res.json();
+  state.findings.find((f) => f.id === id).flagged = flagged;
+  render();
+}
+
+document.getElementById("export").onclick = async (event) => {
+  const button = event.currentTarget;
+  button.disabled = true;
+  const style = document.getElementById("style").value;
+  const res = await fetch(api("/api/export"), { method: "POST", body: JSON.stringify({ style }) });
+  const data = await res.json();
+  button.disabled = false;
+  document.getElementById("status").textContent = res.ok
+    ? `Saved ${data.path.split("/").pop()}${data.copied ? " and copied to clipboard" : ""}`
+    : `Export failed: ${data.error}`;
+};
+
+poll();
+setInterval(poll, 1000);
+</script>
+</body>
+</html>
