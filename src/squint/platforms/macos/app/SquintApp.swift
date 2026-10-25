@@ -256,12 +256,14 @@ struct ToastView: View {
     let title: String
     let subtitle: String
     let onHover: (Bool) -> Void
+    var onClose: () -> Void = {}
+    @State private var hovering = false
 
     var body: some View {
         HStack(alignment: .center, spacing: 10) {
-            Image(nsImage: appIconImage(size: 40))
+            Image(nsImage: appIconImage(size: 80))
                 .resizable()
-                .frame(width: 38, height: 38)
+                .frame(width: 40, height: 40)
             VStack(alignment: .leading, spacing: 1) {
                 HStack(alignment: .firstTextBaseline) {
                     Text("Squint").font(.system(size: 13, weight: .semibold))
@@ -272,11 +274,28 @@ struct ToastView: View {
                 Text(subtitle).font(.system(size: 13)).foregroundStyle(.secondary)
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 11)
-        .frame(width: 344, alignment: .leading)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .frame(width: 356, alignment: .leading)
         .contentShape(Rectangle())
-        .onHover(perform: onHover)
+        .overlay(alignment: .topLeading) {
+            if hovering {  // like a system banner: a close button appears on hover
+                Button(action: onClose) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 18, height: 18)
+                        .background(.regularMaterial, in: Circle())
+                        .overlay(Circle().strokeBorder(Color(nsColor: .separatorColor), lineWidth: 0.5))
+                }
+                .buttonStyle(.plain)
+                .offset(x: 4, y: 4)
+            }
+        }
+        .onHover { inside in
+            hovering = inside
+            onHover(inside)
+        }
     }
 }
 
@@ -291,9 +310,9 @@ final class Toast {
 
     func show(title: String, subtitle: String, seconds: Double = 5, onClick: @escaping () -> Void) {
         panel?.orderOut(nil)
-        let view = ToastView(title: title, subtitle: subtitle) { [weak self] hovering in
+        let view = ToastView(title: title, subtitle: subtitle, onHover: { [weak self] hovering in
             hovering ? self?.hide?.cancel() : self?.scheduleHide(after: 2.5)
-        }
+        }, onClose: { [weak self] in self?.dismiss() })
         .onTapGesture(perform: onClick)
         let host = ClickHostingView(rootView: view)
         let size = host.fittingSize
@@ -304,7 +323,7 @@ final class Toast {
         effect.state = .active
         effect.blendingMode = .behindWindow
         effect.wantsLayer = true
-        effect.layer?.cornerRadius = 18
+        effect.layer?.cornerRadius = 22
         effect.layer?.cornerCurve = .continuous
         effect.layer?.masksToBounds = true
         effect.layer?.borderWidth = 0.5
@@ -322,14 +341,16 @@ final class Toast {
         next.level = .statusBar
         next.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         guard let screen = NSScreen.main?.visibleFrame else { return }
-        let origin = NSPoint(x: screen.maxX - size.width - 12, y: screen.maxY - size.height - 12)
-        next.setFrameOrigin(NSPoint(x: origin.x + 40, y: origin.y))
+        let final = NSRect(x: screen.maxX - size.width - 12, y: screen.maxY - size.height - 12,
+                           width: size.width, height: size.height)
+        next.setFrame(final.offsetBy(dx: 40, dy: 0), display: false)
         next.alphaValue = 0
         next.orderFrontRegardless()
+        // Animate the frame (not the origin: NSWindow ignores animated setFrameOrigin).
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.35
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
-            next.animator().setFrameOrigin(origin)
+            next.animator().setFrame(final, display: true)
             next.animator().alphaValue = 1
         }
         panel = next
@@ -349,7 +370,7 @@ final class Toast {
         panel = nil
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = 0.25
-            current.animator().setFrameOrigin(NSPoint(x: current.frame.minX + 40, y: current.frame.minY))
+            current.animator().setFrame(current.frame.offsetBy(dx: 40, dy: 0), display: true)
             current.animator().alphaValue = 0
         }) { current.orderOut(nil) }
     }
@@ -366,7 +387,55 @@ struct ReviewView: View {
     @State private var pending: CGRect?  // a drawn box shown solid until the new image arrives
     @State private var hover: Target?
 
+    static let hintHeight: CGFloat = 32
+
     var body: some View {
+        VStack(spacing: 0) {
+            screenshot
+                .overlay(alignment: .bottom) { hud }
+            Divider()
+            hintBar
+        }
+        .background(Color(nsColor: .windowBackgroundColor))
+    }
+
+    /// A Preview-style status line: says what a click will do right now.
+    var hintBar: some View {
+        HStack(spacing: 6) {
+            Image(systemName: hintSymbol).foregroundStyle(.secondary)
+            Text(hintText).lineLimit(1).minimumScaleFactor(0.8)
+        }
+        .font(.system(size: 12))
+        .foregroundStyle(.secondary)
+        .frame(maxWidth: .infinity)
+        .frame(height: Self.hintHeight)
+        .animation(.easeOut(duration: 0.12), value: hintText)
+    }
+
+    var hintText: String {
+        switch hover {
+        case .finding(let id):
+            let hidden = model.review?.findings.first { $0.id == id }?.flagged ?? false
+            return hidden ? "Click to show this" : "Click to hide this"
+        case .box:
+            return "Click to remove this box"
+        case nil:
+            if dragRect != nil { return "Release to cover this area" }
+            return "Click an item to hide or show it · Drag to cover anything else"
+        }
+    }
+
+    var hintSymbol: String {
+        switch hover {
+        case .finding(let id):
+            let hidden = model.review?.findings.first { $0.id == id }?.flagged ?? false
+            return hidden ? "eye" : "eye.slash"
+        case .box: return "xmark.square"
+        case nil: return dragRect != nil ? "rectangle.dashed" : "cursorarrow.click"
+        }
+    }
+
+    var screenshot: some View {
         GeometryReader { geo in
             if let review = model.review, let image = model.image {
                 let scale = min(geo.size.width / review.image.width, geo.size.height / review.image.height)
@@ -415,8 +484,6 @@ struct ReviewView: View {
                 .overlay(alignment: .top) { offlineNote(review) }
             }
         }
-        .overlay(alignment: .bottom) { hud }
-        .background(Color(nsColor: .windowBackgroundColor))
     }
 
     func rect(_ box: BoxRect, _ scale: CGFloat) -> CGRect {
@@ -803,6 +870,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var statusItem: NSStatusItem?
     var status = "Starting…"
     var poller: Timer?
+    var launchedAtLogin = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -816,6 +884,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
         setUpMenuBar()
+        launchedAtLogin = Self.launchedAtLogin
         guard Engine.isBundled else {
             status = "Squint is incomplete; reinstall it"
             return
@@ -827,6 +896,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func prepare() async {
         await setup.refresh()
+        // Confirm right away unless setup is needed (its window is the confirmation).
+        if (setup.ready || setup.ollama == .stopped) && !launchedAtLogin {
+            announceRunning(again: false)
+        }
         if setup.ollama == .stopped {
             setup.launchOllama()
             for _ in 0..<40 where setup.ollama != .running {  // up to ~20 s
@@ -868,8 +941,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         setupWindow?.orderOut(nil)
         setOpenAtLogin(setup.openAtLogin)
         startEngine()
-        toast.show(title: "Squint is watching your screenshots",
-                   subtitle: "Find it in the menu bar", seconds: 4) { [weak self] in self?.toast.dismiss() }
+        announceRunning(again: false)
+    }
+
+    /// Squint has no Dock icon, so opening it must visibly confirm it is running.
+    func announceRunning(again: Bool) {
+        toast.show(title: again ? "Squint is already on" : "Squint is on",
+                   subtitle: "It lives in the menu bar · Take a screenshot to try it",
+                   seconds: 5) { [weak self] in
+            self?.toast.dismiss()
+            self?.statusItem?.button?.performClick(nil)
+        }
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if setupWindow?.isVisible == true || status == "Waiting for setup" {
+            showSetup()
+        } else if statusItem != nil {
+            announceRunning(again: true)
+        }
+        return false
+    }
+
+    static var launchedAtLogin: Bool {
+        guard let event = NSAppleEventManager.shared().currentAppleEvent else { return false }
+        return event.eventID == kAEOpenApplication
+            && event.paramDescriptor(forKeyword: keyAEPropData)?.enumCodeValue == keyAELaunchedAsLogInItem
     }
 
     func startEngine() {
@@ -929,15 +1026,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         window?.makeKeyAndOrderFront(nil)
     }
 
-    /// Show the screenshot at its natural size (in points), capped to 70% of the screen.
+    /// Size the window to the screenshot's own shape (no empty margins): natural size in
+    /// points, small crops enlarged to a readable width, large ones capped to 70% of the screen.
     func fit(_ win: NSWindow, to review: Review) {
         guard let screen = win.screen ?? NSScreen.main else { return }
-        let scale = screen.backingScaleFactor
-        let natural = CGSize(width: review.image.width / scale, height: review.image.height / scale)
-        let limit = CGSize(width: screen.visibleFrame.width * 0.7, height: screen.visibleFrame.height * 0.7)
-        let fitScale = min(1, limit.width / natural.width, limit.height / natural.height)
-        let size = CGSize(width: max(320, natural.width * fitScale), height: max(120, natural.height * fitScale))
-        win.setContentSize(size)
+        let backing = screen.backingScaleFactor
+        let natural = CGSize(width: review.image.width / backing, height: review.image.height / backing)
+        let chrome = ReviewView.hintHeight + 1
+        let limit = CGSize(width: screen.visibleFrame.width * 0.7,
+                           height: screen.visibleFrame.height * 0.7 - chrome)
+        let enlarge = min(2, max(1, 480 / natural.width))
+        let scale = min(enlarge, limit.width / natural.width, limit.height / natural.height)
+        win.setContentSize(CGSize(width: (natural.width * scale).rounded(),
+                                  height: (natural.height * scale).rounded() + chrome))
     }
 
     // MARK: Menu bar
