@@ -221,7 +221,6 @@ def score(timeline: dict) -> np.ndarray:
 
     hook_end = sec(scenes["twist"]["start"])
     mentor = sec(scenes["mentor"]["start"])
-    groove_back = sec(scenes["threshold"]["start"])
     # The end card lands in the pause after "Nothing leaves your Mac." (see Film.tsx Close).
     card = sec(scenes["close"]["start"] + CARD_AT)
 
@@ -282,12 +281,12 @@ def score(timeline: dict) -> np.ndarray:
         mix.add(hb + 0.22, kick(), 0.2)
         hb += beat * 2
 
-    # Mentor: a riser into the reveal, then the lift chords without drums for two bars.
+    # Mentor to the end card: a riser into the reveal, then calm lift chords (no drums) in one
+    # continuous section, so the progression never restarts mid-phrase.
     mix.add(mentor - bar / 2, sweep(bar / 2, 400, 8000), 0.45)
-    groove(mentor, groove_back, lift_chords, 0.75, drums=False)
+    groove(mentor, card, lift_chords, 0.75, drums=False)
 
-    # Threshold to the end card: stays calm (no drums), then one soft chord that rings out.
-    groove(groove_back, card, lift_chords, 0.75, drums=False)  # same as the mentor: no change at 28 s
+    # The end card: one soft chord that blooms and rings out.
     tail = end - card
     l, r = pad([48, 60, 64, 67, 71, 74], tail * 2)  # use the rising half only…
     n = int(tail * RATE)
