@@ -22,6 +22,7 @@ class Rect:
     top: int
     right: int
     bottom: int
+    style: str | None = None  # None: use the style passed to render()
 
     @property
     def width(self) -> int:
@@ -37,7 +38,9 @@ class RedactionPlan:
     rects: tuple[Rect, ...]
 
 
-def build_plan(boxes: list[BBox], image_size: tuple[int, int]) -> RedactionPlan:
+def build_plan(
+    boxes: list[BBox], image_size: tuple[int, int], style: str | None = None
+) -> RedactionPlan:
     """Round each box outward to whole pixels and clamp it to the image."""
     width, height = image_size
     rects = []
@@ -47,6 +50,7 @@ def build_plan(boxes: list[BBox], image_size: tuple[int, int]) -> RedactionPlan:
             max(0, math.floor(b.y)),
             min(width, math.ceil(b.x + b.width)),
             min(height, math.ceil(b.y + b.height)),
+            style,
         )
         if rect.width > 0 and rect.height > 0:
             rects.append(rect)
@@ -105,8 +109,9 @@ def render(
     seed: int | None = None,
 ) -> Image.Image:
     """Return a redacted copy. The original image is never modified."""
-    if style not in STYLES:
-        raise ValueError(f"unknown style {style!r}; expected one of {STYLES}")
+    for s in (style, *(r.style for r in plan.rects if r.style)):
+        if s not in STYLES:
+            raise ValueError(f"unknown style {s!r}; expected one of {STYLES}")
     source = image.convert("RGB")
     out = source.copy()
     rng = random.Random(seed)
@@ -114,5 +119,5 @@ def render(
         bg = ring_colour(source, rect)
         fg = contrast_colour(bg)
         patch = noise_patch((rect.width, rect.height), bg, fg, rng)
-        out.paste(style_patch(patch, style, fg), (rect.left, rect.top))
+        out.paste(style_patch(patch, rect.style or style, fg), (rect.left, rect.top))
     return out

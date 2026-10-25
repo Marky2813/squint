@@ -1,4 +1,4 @@
-"""Review state for one screenshot: which findings are flagged, and the export."""
+"""Review state for one screenshot: flagged findings, drawn boxes, and the export."""
 
 from dataclasses import asdict
 from pathlib import Path
@@ -6,7 +6,11 @@ from pathlib import Path
 from PIL import Image
 
 from squint.core.pipeline import Analysis, mask
-from squint.core.redact import STYLES, build_plan, render
+from squint.core.redact import STYLES, RedactionPlan, build_plan, render
+from squint.core.types import BBox
+
+# Boxes the user draws are always opaque: they were chosen by hand, so hide them fully.
+DRAWN_STYLE = "solid"
 
 
 class ReviewSession:
@@ -17,6 +21,8 @@ class ReviewSession:
         self.source = source
         self.style = "pixelate"
         self.flagged = {f.id: f.flagged for f in analysis.findings}
+        self.boxes: dict[int, BBox] = {}
+        self.next_box_id = 0
         with Image.open(image_path) as image:
             self.size = image.size
 
@@ -43,6 +49,7 @@ class ReviewSession:
                 }
                 for f in self.analysis.findings
             ],
+            "boxes": [{"id": i, **asdict(b)} for i, b in self.boxes.items()],
         }
 
     def toggle(self, finding_id: int) -> bool:
@@ -51,6 +58,31 @@ class ReviewSession:
             raise KeyError(finding_id)
         self.flagged[finding_id] = not self.flagged[finding_id]
         return self.flagged[finding_id]
+
+    def add_box(self, box: BBox) -> int:
+        """Hide a region the user drew; returns its id. Clamped to the image."""
+        rect = build_plan([box], self.size).rects
+        if not rect:
+            raise ValueError("box is outside the image")
+        r = rect[0]
+        box_id = self.next_box_id
+        self.next_box_id += 1
+        self.boxes[box_id] = BBox(r.left, r.top, r.width, r.height)
+        return box_id
+
+    def remove_box(self, box_id: int) -> None:
+        if box_id not in self.boxes:
+            raise KeyError(box_id)
+        del self.boxes[box_id]
+
+    def plan(self) -> RedactionPlan:
+        detected = [
+            f.bbox
+            for f in self.analysis.findings
+            if self.flagged[f.id] and f.bbox is not None
+        ]
+        drawn = build_plan(list(self.boxes.values()), self.size, DRAWN_STYLE)
+        return RedactionPlan(build_plan(detected, self.size).rects + drawn.rects)
 
     def set_style(self, style: str) -> None:
         if style not in STYLES:
@@ -63,13 +95,8 @@ class ReviewSession:
     def export(self, style: str | None = None) -> Path:
         """Write <name>.redacted.png next to the original. The original is never touched."""
         style = style or self.style
-        boxes = [
-            f.bbox
-            for f in self.analysis.findings
-            if self.flagged[f.id] and f.bbox is not None
-        ]
         with Image.open(self.image_path) as image:
-            redacted = render(image, build_plan(boxes, image.size), style)
+            redacted = render(image, self.plan(), style)
         out = self.output_path()
         redacted.save(out)  # new image object: no EXIF or other metadata carried over
         return out

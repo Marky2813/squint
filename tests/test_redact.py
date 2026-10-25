@@ -106,3 +106,24 @@ def test_style_patch_pixelate_makes_blocks():
     patch = noise_patch((40, 20), (255, 255, 255), (0, 0, 0), random.Random(0))
     out = style_patch(patch, "pixelate", (0, 0, 0))
     assert out.getpixel((0, 0)) == out.getpixel((3, 3))
+
+
+def test_rect_style_overrides_render_style():
+    image = screenshot_with("FAKE-secret-123")
+    solid = Rect(BOX.left, BOX.top, BOX.right, BOX.bottom, "solid")
+    out = render(image, RedactionPlan((solid,)), "pixelate", seed=1)
+    assert (
+        len(out.crop((solid.left, solid.top, solid.right, solid.bottom)).getcolors())
+        == 1
+    )
+
+
+def test_render_rejects_unknown_rect_style():
+    with pytest.raises(ValueError):
+        render(screenshot_with("x"), RedactionPlan((Rect(0, 0, 5, 5, "swirl"),)))
+
+
+def test_build_plan_tags_rects_with_style():
+    plan = build_plan([BBox(1, 1, 5, 5)], (10, 10), "solid")
+    assert plan.rects[0].style == "solid"
+    assert build_plan([BBox(1, 1, 5, 5)], (10, 10)).rects[0].style is None

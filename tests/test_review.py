@@ -94,3 +94,41 @@ def test_set_style_changes_default_export_style(session):
 def test_set_style_rejects_unknown(session):
     with pytest.raises(ValueError):
         session.set_style("swirl")
+
+
+def test_drawn_box_is_listed_and_redacted_solid(session):
+    box_id = session.add_box(BBox(60.4, 30, 30, 10))
+    assert session.to_json()["boxes"] == [
+        {"id": box_id, "x": 60, "y": 30, "width": 31, "height": 10}
+    ]
+    with Image.open(session.export()) as result:  # session style is pixelate
+        assert len(result.crop((60, 30, 90, 40)).getcolors()) == 1
+
+
+def test_drawn_box_is_clamped_and_outside_boxes_are_rejected(session):
+    session.add_box(BBox(90, 40, 50, 50))
+    assert session.to_json()["boxes"][0] == {
+        "id": 0,
+        "x": 90,
+        "y": 40,
+        "width": 10,
+        "height": 10,
+    }
+    with pytest.raises(ValueError):
+        session.add_box(BBox(200, 200, 5, 5))
+
+
+def test_remove_box(session):
+    box_id = session.add_box(BBox(60, 30, 30, 10))
+    session.remove_box(box_id)
+    assert session.to_json()["boxes"] == []
+    with Image.open(session.export()) as result:
+        assert result.getpixel((70, 35)) == (0, 0, 0)
+    with pytest.raises(KeyError):
+        session.remove_box(box_id)
+
+
+def test_box_ids_are_never_reused(session):
+    first = session.add_box(BBox(0, 0, 5, 5))
+    session.remove_box(first)
+    assert session.add_box(BBox(0, 0, 5, 5)) != first
