@@ -167,3 +167,20 @@ def test_jwt_header_valid():
 def test_is_benign_placeholder_for_any_rule():
     assert is_benign("assignment", "<TOKEN>", "token: <TOKEN>", 7)
     assert not is_benign("assignment", "FAKEpw1", "token: FAKEpw1", 7)
+
+
+def test_password_in_prose_is_a_candidate():
+    m = only("hey, the staging password is tulip-Orbit4471! ok?")
+    assert (m.rule, m.tier, m.value) == ("assignment", "ambiguous", "tulip-Orbit4471!")
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "the password is required",
+        "your token is invalid",
+        "password is wrong, try again",
+    ],
+)
+def test_prose_with_a_plain_word_is_not_a_candidate(text):
+    assert extract(lines(text)) == []

@@ -68,7 +68,7 @@ _RULES: list[tuple[str, str, re.Pattern, int]] = [
         AMBIGUOUS,
         re.compile(
             r"(?i)(?<![a-z])(?:password|passwd|pwd|pass|secret|token|api[_-]?key|access[_-]?key)\w*"
-            r"[\"']?\s*[:=]\s*[\"']?([^\s\"',;]+)"
+            r"[\"']?(?:\s*[:=]\s*|\s+is\s+)[\"']?([^\s\"',;]+)"
         ),
         1,
     ),
@@ -136,6 +136,9 @@ def is_benign(rule: str, value: str, text: str, start: int) -> bool:
         return True
     if any(m.start() <= start < m.end() for m in _UUID_IN_TEXT.finditer(text)):
         return True
+    if rule == "assignment" and re.search(r"\s+is\s+[\"']?$", text[:start]):
+        # Prose ("the password is required"): only password-like words count.
+        return not re.search(r"[\d\W_]", value)
     if rule == "card":
         return not luhn_valid(re.sub(r"\D", "", value))
     if rule == "jwt":
