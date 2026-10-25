@@ -26,7 +26,7 @@ INSTRUCTIONS = (
     "Sensitive: real-looking passwords, tokens, API keys, and private people's emails or phone numbers. "
     "Not sensitive: placeholders, defaults like 'changeme', commit hashes, UUIDs, image digests, dates, "
     "no-reply or generic support addresses. "
-    "Output an object mapping 'c<id>' to true if sensitive, false if not.\n\n"
+    'Answer {"sensitive": true} or {"sensitive": false}.\n\n'
     "Examples:\n"
     '{"rule":"assignment","value":"password123","context":"# example: password=password123"} -> false\n'
     '{"rule":"assignment","value":"Kx9#mPq2-FAKE","context":"REDIS_PASSWORD=Kx9#mPq2-FAKE"} -> true\n'
@@ -48,8 +48,19 @@ class Verdicts:
     classifier_offline: bool
 
 
+# Gemma's chat format, written by hand (raw mode) so every request shares a byte-identical
+# prefix. Gemma 3's sliding-window attention means llama.cpp can only reuse cached prompt
+# state from a checkpoint, so warm_up() sends this prefix alone to put a checkpoint at its end.
+PREFIX = "<start_of_turn>user\n" + INSTRUCTIONS
+SUFFIX = "<end_of_turn>\n<start_of_turn>model\n"
+VERDICT_SCHEMA = {
+    "type": "object",
+    "properties": {"sensitive": {"type": "boolean"}},
+    "required": ["sensitive"],
+}
+
+
 def build_request(candidate: Candidate, model: str = DEFAULT_MODEL) -> dict:
-    key = f"c{candidate.id}"
     item = {
         "id": candidate.id,
         "rule": candidate.rule,
@@ -58,22 +69,30 @@ def build_request(candidate: Candidate, model: str = DEFAULT_MODEL) -> dict:
     }
     return {
         "model": model,
-        "prompt": INSTRUCTIONS + json.dumps(item),
+        "prompt": PREFIX + json.dumps(item) + SUFFIX,
+        "raw": True,
         "stream": False,
         "keep_alive": "30m",
-        "format": {
-            "type": "object",
-            "properties": {key: {"type": "boolean"}},
-            "required": [key],
-        },
+        "format": VERDICT_SCHEMA,
         "options": {"temperature": 0, "num_predict": 20},
     }
 
 
-def parse_verdict(candidate_id: int, response_text: str) -> bool:
+def build_prime_request(model: str = DEFAULT_MODEL) -> dict:
+    return {
+        "model": model,
+        "prompt": PREFIX,
+        "raw": True,
+        "stream": False,
+        "keep_alive": "30m",
+        "options": {"temperature": 0, "num_predict": 1},
+    }
+
+
+def parse_verdict(response_text: str) -> bool:
     """Return Gemma's verdict, or True (sensitive) if the reply is unusable."""
     try:
-        value = json.loads(response_text)[f"c{candidate_id}"]
+        value = json.loads(response_text)["sensitive"]
     except (ValueError, KeyError, TypeError):
         return True
     return value if isinstance(value, bool) else True
@@ -86,20 +105,22 @@ class OllamaClassifier:
         self.session = session or requests.Session()
         self.model = model
 
+    def _post(self, body: dict, timeout: float) -> dict | None:
+        try:
+            resp = self.session.post(OLLAMA_URL, json=body, timeout=timeout)
+            resp.raise_for_status()
+            return resp.json()
+        except (requests.RequestException, ValueError):
+            return None
+
     def judge(
         self, candidate: Candidate, timeout: float = TIMEOUT_SECONDS
     ) -> bool | None:
         """Return the verdict, or None if Ollama could not be reached."""
-        try:
-            resp = self.session.post(
-                OLLAMA_URL,
-                json=build_request(candidate, self.model),
-                timeout=timeout,
-            )
-            resp.raise_for_status()
-            return parse_verdict(candidate.id, resp.json().get("response", ""))
-        except (requests.RequestException, ValueError):
+        reply = self._post(build_request(candidate, self.model), timeout)
+        if reply is None:
             return None
+        return parse_verdict(reply.get("response", ""))
 
     def judge_all(self, candidates: list[Candidate]) -> Verdicts:
         asked = candidates[:MAX_CANDIDATES]
@@ -115,14 +136,14 @@ class OllamaClassifier:
         return Verdicts(sensitive=sensitive, classifier_offline=offline)
 
     def warm_up(self) -> bool:
-        """Load the model, then prime every parallel slot so the first screenshot isn't slow."""
-        probe = Candidate(id=0, rule="warmup", value="x", context="x")
-        if self.judge(probe, timeout=WARM_UP_TIMEOUT_SECONDS) is None:
+        """Load the model, then cache the shared prefix in every parallel slot."""
+        body = build_prime_request(self.model)
+        if self._post(body, WARM_UP_TIMEOUT_SECONDS) is None:
             return False
         with ThreadPoolExecutor(MAX_CANDIDATES) as pool:
             results = list(
                 pool.map(
-                    lambda _: self.judge(probe, timeout=WARM_UP_TIMEOUT_SECONDS),
+                    lambda _: self._post(body, WARM_UP_TIMEOUT_SECONDS),
                     range(MAX_CANDIDATES),
                 )
             )

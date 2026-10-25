@@ -1,4 +1,5 @@
 import json
+import json as json_module
 import threading
 
 import pytest
@@ -8,9 +9,13 @@ from squint.core.classify import (
     MAX_CANDIDATES,
     MAX_CONTEXT_CHARS,
     OLLAMA_URL,
+    PREFIX,
+    SUFFIX,
     TIMEOUT_SECONDS,
+    VERDICT_SCHEMA,
     WARM_UP_TIMEOUT_SECONDS,
     OllamaClassifier,
+    build_prime_request,
     build_request,
     parse_verdict,
 )
@@ -37,7 +42,7 @@ class FakeResponse:
 
 
 class FakeSession:
-    """Answers each request via reply(candidate_id) -> FakeResponse | Exception."""
+    """Answers via reply(candidate_id, or "prime" for prefix requests) -> FakeResponse | Exception."""
 
     def __init__(self, reply):
         self.reply = reply
@@ -47,33 +52,52 @@ class FakeSession:
     def post(self, url, json, timeout):
         with self.lock:
             self.calls.append((url, json, timeout))
-        cid = int(json["format"]["required"][0][1:])
-        result = self.reply(cid)
+        prompt = json["prompt"]
+        if prompt == PREFIX:
+            result = self.reply("prime")
+        else:
+            result = self.reply(
+                json_module.loads(prompt[len(PREFIX) : -len(SUFFIX)])["id"]
+            )
         if isinstance(result, Exception):
             raise result
         return result
 
 
 def answer(verdicts):
-    return lambda cid: FakeResponse(
-        {"response": json.dumps({f"c{cid}": verdicts[cid]})}
-    )
+    def reply(cid):
+        if cid == "prime":
+            return FakeResponse({"response": "x"})
+        return FakeResponse({"response": json.dumps({"sensitive": verdicts[cid]})})
+
+    return reply
 
 
 def test_build_request_constrains_output_to_one_required_boolean():
     req = build_request(cand(7))
-    assert req["format"] == {
-        "type": "object",
-        "properties": {"c7": {"type": "boolean"}},
-        "required": ["c7"],
-    }
+    assert req["format"] == VERDICT_SCHEMA
+    assert VERDICT_SCHEMA["required"] == ["sensitive"]
     assert req["options"]["temperature"] == 0
     assert req["stream"] is False
 
 
+def test_build_request_shares_exact_prefix_in_raw_mode():
+    req = build_request(cand(7))
+    assert req["raw"] is True
+    assert req["prompt"].startswith(PREFIX)
+    assert req["prompt"].endswith(SUFFIX)
+
+
+def test_build_prime_request_is_prefix_only():
+    req = build_prime_request()
+    assert req["prompt"] == PREFIX
+    assert req["raw"] is True
+    assert req["options"]["num_predict"] == 1
+
+
 def test_build_request_includes_candidate_and_truncates_context():
     req = build_request(cand(1, context="x" * 500))
-    item = json.loads(req["prompt"].rsplit("Candidate:\n", 1)[1])
+    item = json.loads(req["prompt"][len(PREFIX) : -len(SUFFIX)])
     assert item["value"] == "FAKE-secret-value"
     assert item["rule"] == "assignment"
     assert len(item["context"]) == MAX_CONTEXT_CHARS
@@ -86,17 +110,17 @@ def test_build_request_uses_given_model():
 @pytest.mark.parametrize(
     "text, expected",
     [
-        ('{"c3": false}', False),
-        ('{"c3": true}', True),
+        ('{"sensitive": false}', False),
+        ('{"sensitive": true}', True),
         ("not json", True),
-        ('{"c4": false}', True),
-        ('{"c3": "false"}', True),
+        ('{"other": false}', True),
+        ('{"sensitive": "false"}', True),
         ("[]", True),
         ("", True),
     ],
 )
 def test_parse_verdict_fails_safe(text, expected):
-    assert parse_verdict(3, text) is expected
+    assert parse_verdict(text) is expected
 
 
 def test_url_is_loopback_only():
@@ -166,6 +190,7 @@ def test_warm_up_primes_every_parallel_slot_with_long_timeout():
     classifier.warm_up()
     assert len(session.calls) == 1 + MAX_CANDIDATES
     assert all(timeout == WARM_UP_TIMEOUT_SECONDS for _, _, timeout in session.calls)
+    assert all(body["prompt"] == PREFIX for _, body, _ in session.calls)
     classifier.judge(cand(1))
     assert session.calls[-1][2] == TIMEOUT_SECONDS
 
