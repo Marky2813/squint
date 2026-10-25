@@ -42,7 +42,15 @@ Requires macOS 14+, Xcode command line tools, and [uv](https://docs.astral.sh/uv
 ```sh
 uv sync
 uv run pytest                        # tests
-uv run python scripts/build_app.py   # → dist/Squint.app and dist/Squint.dmg
+uv run python scripts/build_app.py   # → dist/Squint.app and dist/Squint.dmg (universal)
+uv run python eval/run_eval.py       # accuracy on the synthetic eval set
+```
+
+A release build anyone can open needs a Developer ID Application certificate and a
+notarytool profile (see the top of `scripts/build_app.py`):
+
+```sh
+uv run python scripts/build_app.py --sign "Developer ID Application: …" --notarize squint-notary
 ```
 
 For development you can also run the engine from a terminal (it opens the same review
