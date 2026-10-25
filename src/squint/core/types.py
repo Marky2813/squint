@@ -26,3 +26,13 @@ class OcrWord:
 class OcrLine:
     text: str
     words: tuple[OcrWord, ...]
+
+
+@dataclass(frozen=True)
+class Candidate:
+    """A regex match the classifier may judge. value is never logged."""
+
+    id: int
+    rule: str
+    value: str
+    context: str
