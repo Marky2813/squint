@@ -62,9 +62,9 @@ const Scaled: React.FC<{ width: number; children: React.ReactNode; radius?: numb
 
 // MARK: - Hook: paste, paste, paste…
 
-// How long each screenshot is on screen (frames), quickening into a montage.
-const HOOK_LENGTHS = [92, 74, 62, 32, 28, 24, 22];
-const HOOK_STARTS = HOOK_LENGTHS.map((_, i) => HOOK_LENGTHS.slice(0, i).reduce((a, b) => a + b, 0) + 10);
+// When each screenshot is on screen (frames): one voice line per beat, then a montage.
+const HOOK_STARTS = timeline.hookShots.map((s) => s.start);
+const HOOK_LENGTHS = timeline.hookShots.map((s) => s.length);
 const PASTE_AT = HOOK_STARTS.map((s, i) => s + Math.round(HOOK_LENGTHS[i] * 0.62));
 const SCREEN = { x: 96, y: 200, w: 1040 };
 const CHAT = { x: 1220, y: 96, w: 600, h: 890 };
@@ -174,11 +174,11 @@ const Twist: React.FC = () => {
   const { fps } = useVideoConfig();
   const w = 430;
   const h = (w * SHOT_H) / SHOT_W;
-  const ringAt = (i: number) => 30 + i * 7;
+  const ringAt = (i: number) => 22 + i * 6;
   return (
     <AbsoluteFill style={{ background: "#0b0b0c" }}>
       <div style={{ position: "absolute", top: 70, width: "100%", textAlign: "center" }}>
-        <Words text="You checked the bug." start={20} size={64} color="rgba(245,245,247,0.75)" weight={600} />
+        <Words text="You checked the bug." start={12} size={64} color="rgba(245,245,247,0.75)" weight={600} />
       </div>
       <div style={{ position: "absolute", top: 180, left: 0, right: 0, display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 24, padding: "0 40px" }}>
         {HOOK_SHOTS.map((Shot, i) => {
@@ -195,7 +195,7 @@ const Twist: React.FC = () => {
         })}
       </div>
       <div style={{ position: "absolute", bottom: 70, width: "100%", textAlign: "center" }}>
-        <Words text="Did you check the corners?" start={64} size={92} color="#f5f5f7" />
+        <Words text="Did you check the corners?" start={58} size={92} color="#f5f5f7" />
       </div>
     </AbsoluteFill>
   );
@@ -230,16 +230,16 @@ const Mentor: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const pop = spring({ frame: frame - 4, fps, config: { damping: 14, stiffness: 100 } });
-  const squint = interpolate(frame, [30, 48], [0, 1], { ...clamp, easing: ease });
-  const glow = interpolate(frame, [36, 90], [0, 1], clamp);
+  const squint = interpolate(frame, [40, 58], [0, 1], { ...clamp, easing: ease });
+  const glow = interpolate(frame, [46, 100], [0, 1], clamp);
   return (
     <FadeIn bg={C.night}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", gap: 40 }}>
         <div style={{ width: 260, height: 260, borderRadius: 60, background: "linear-gradient(#41434a, #17171b)", display: "flex", alignItems: "center", justifyContent: "center", transform: `scale(${pop})`, boxShadow: `0 0 ${150 * glow}px rgba(0,113,227,${0.5 * glow}), 0 30px 80px rgba(0,0,0,0.6)` }}>
           <Eye size={170} squint={squint} />
         </div>
-        <Words text="Stay lazy. Meet Squint." start={34} size={110} color="#f5f5f7" />
-        <Words text="It does the squinting, so you don't have to." start={84} size={52} weight={500} color="rgba(245,245,247,0.7)" stagger={3} />
+        <Words text="Stay lazy. Meet Squint." start={14} size={110} color="#f5f5f7" />
+        <Words text="It does the squinting, so you don't have to." start={80} size={52} weight={500} color="rgba(245,245,247,0.7)" stagger={3} />
       </AbsoluteFill>
     </FadeIn>
   );
@@ -335,8 +335,8 @@ const Reward: React.FC = () => {
 const Close: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const card = spring({ frame: frame - 64, fps, config: { damping: 200 } });
-  const first = interpolate(frame, [54, 62], [1, 0], clamp);
+  const card = spring({ frame: frame - timeline.cardAt, fps, config: { damping: 200 } });
+  const first = interpolate(frame, [timeline.cardAt - 8, timeline.cardAt], [1, 0], clamp);
   return (
     <FadeIn>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", opacity: first }}>
@@ -344,9 +344,9 @@ const Close: React.FC = () => {
       </AbsoluteFill>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", gap: 24, opacity: card }}>
         <AppIcon size={200} style={{ transform: `scale(${0.85 + 0.15 * card})` }} />
-        <Words text="Squint" start={68} size={132} />
-        <div style={{ ...useEnter(84), fontFamily: FONT, fontSize: 62, fontWeight: 600, color: C.accent }}>mysquint.tech</div>
-        <div style={{ ...useEnter(98), fontFamily: FONT, fontSize: 28, color: C.muted, letterSpacing: 0.5 }}>
+        <Words text="Squint" start={timeline.cardAt + 6} size={132} />
+        <div style={{ ...useEnter(timeline.cardAt + 22), fontFamily: FONT, fontSize: 62, fontWeight: 600, color: C.accent }}>mysquint.tech</div>
+        <div style={{ ...useEnter(timeline.cardAt + 36), fontFamily: FONT, fontSize: 28, color: C.muted, letterSpacing: 0.5 }}>
           Free and open source · Powered by Gemma 3, on your Mac
         </div>
       </AbsoluteFill>
@@ -362,11 +362,12 @@ const Sfx: React.FC<{ at: number; file: string; volume?: number }> = ({ at, file
   </Sequence>
 );
 
-/** Music sits lower while someone is speaking. */
+const CUES = timeline.scenes.flatMap((s) => s.cues);
+
+/** A steady music bed that dips a little under speech (the voice always leads). */
 const musicVolume = (f: number) => {
-  const speaking = timeline.scenes.some((s) => f >= s.vo.at - 6 && f <= s.vo.at + s.vo.length + 6);
-  const fadeIn = Math.min(1, f / 20);
-  return (speaking ? 0.32 : 0.55) * fadeIn;
+  const speaking = CUES.some((c) => f >= c.at - 4 && f <= c.at + c.length + 4);
+  return (speaking ? 0.3 : 0.42) * Math.min(1, f / 12);
 };
 
 const SCENES: Record<string, React.FC> = { hook: Hook, twist: Twist, refusal: Refusal, mentor: Mentor, threshold: Threshold, reward: Reward, close: Close };
@@ -384,21 +385,21 @@ export const Film: React.FC = () => {
         );
       })}
       <Audio src={staticFile("sfx2/music.wav")} volume={musicVolume} />
-      {timeline.scenes.map((sc) => (
-        <Sequence key={`vo-${sc.name}`} from={sc.vo.at} layout="none">
-          <Audio src={staticFile(sc.vo.file)} volume={1} />
+      {CUES.map((c) => (
+        <Sequence key={c.file} from={c.at} layout="none">
+          <Audio src={staticFile(c.file)} volume={1} />
         </Sequence>
       ))}
       {PASTE_AT.map((p) => <Sfx key={p} at={s("hook") + p} file="paste.wav" volume={0.7} />)}
-      {HOOK_SHOTS.map((_, i) => <Sfx key={i} at={s("twist") + 30 + i * 7} file="ring.wav" volume={0.22} />)}
+      {HOOK_SHOTS.map((_, i) => <Sfx key={i} at={s("twist") + 22 + i * 6} file="ring.wav" volume={0.22} />)}
       <Sfx at={s("refusal") + 26} file="strike.wav" volume={0.45} />
-      <Sfx at={s("mentor") + 30} file="chime.wav" volume={0.45} />
+      <Sfx at={s("mentor") + 46} file="chime.wav" volume={0.45} />
       {[22, 24, 26, 28].map((f) => <Sfx key={f} at={s("threshold") + f} file="key.wav" volume={0.5} />)}
       <Sfx at={s("threshold") + 66} file="shutter.wav" volume={0.6} />
       <Sfx at={s("threshold") + 96} file="whoosh.wav" volume={0.35} />
       <Sfx at={s("threshold") + 100} file="chime.wav" volume={0.4} />
       <Sfx at={s("reward") + 14} file="paste.wav" volume={0.7} />
-      <Sfx at={s("close") + 64} file="chime.wav" volume={0.45} />
+      <Sfx at={s("close") + timeline.cardAt} file="chime.wav" volume={0.4} />
     </AbsoluteFill>
   );
 };

@@ -20,9 +20,13 @@ TIMING = HERE.parent / "src" / "v2" / "vo.json"
 
 # (text, speed). " | " splits a line into phrases joined by real silence (PAUSE seconds):
 # the twist, the tagline and the sign-off need a beat that punctuation alone doesn't give.
-PAUSE = 0.38
+PAUSE = 0.30
+PAUSES = {"montage": 0.22}  # a quicker rhythm for the montage
 LINES = {
-    "open": ("Every day, you paste your screen into AI.", 0.95),
+    "open": ("Every day, you paste your screen into AI.", 0.97),
+    "text": ("A text from Mom, with her new number.", 1.0),
+    "dash": ("Your dashboard, signed in as you.", 1.0),
+    "montage": ("Keys. | Passwords. | Cards.", 1.0),
     "twist": ("You checked the bug. | But did you check the corners?", 0.88),
     "refusal": ("Nobody checks every corner. Honestly? We're all a little lazy.", 0.95),
     "mentor": ("So stay lazy. | Meet Squint. | It does the squinting, so you don't have to.", 0.92),
@@ -41,8 +45,9 @@ def main() -> int:
         parts = []
         for phrase in text.split(" | "):
             audio, rate = kokoro.create(phrase, voice=voice, speed=speed, lang="en-us")
-            parts += [audio, np.zeros(int(PAUSE * rate), dtype=audio.dtype)]
+            parts += [audio, np.zeros(int(PAUSES.get(name, PAUSE) * rate), dtype=audio.dtype)]
         samples = np.concatenate(parts[:-1])
+        samples = samples / max(1e-6, float(np.max(np.abs(samples)))) * 0.95  # consistent level
         sf.write(OUT / f"{name}.wav", samples, rate)
         timing[name] = round(len(samples) / rate, 3)
         print(f"{name:<10} {timing[name]:5.2f}s  {text.replace(' | ', ' ')}")
