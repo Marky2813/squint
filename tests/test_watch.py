@@ -239,3 +239,31 @@ def test_stop_on_signals_turns_sigterm_and_sighup_into_keyboard_interrupt():
     finally:
         for sig, handler in saved.items():
             signal.signal(sig, handler)
+
+
+def test_exit_when_closed_fires_once_stream_ends():
+    closed = []
+    thread = watch.exit_when_closed(
+        iter(["noise\n", "more\n"]), lambda: closed.append(1)
+    )
+    thread.join(timeout=2)
+    assert closed == [1]
+
+
+def test_open_folder_without_permission_falls_back_to_none(tmp_path, monkeypatch):
+    def denied(self):
+        raise PermissionError(1, "Operation not permitted")
+
+    monkeypatch.setattr(Path, "iterdir", denied)
+    assert watch.open_folder(tmp_path) is None
+
+
+def test_open_folder_watches_readable_folder(tmp_path):
+    assert isinstance(watch.open_folder(tmp_path), FolderWatcher)
+
+
+def test_announce_url_prints_url_line(capsys):
+    from squint.cli import announce_url
+
+    announce_url("http://127.0.0.1:1/?t=x")
+    assert capsys.readouterr().out == "url http://127.0.0.1:1/?t=x\n"

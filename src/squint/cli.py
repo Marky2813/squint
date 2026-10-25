@@ -55,6 +55,11 @@ def launch_review_app(url: str) -> subprocess.Popen | None:
         return None
 
 
+def announce_url(url: str) -> None:
+    """--app mode: Squint.app reads this line from our stdout and connects to the API."""
+    print(f"url {url}")
+
+
 def main(argv: list[str] | None = None) -> int:
     sys.stdout.reconfigure(line_buffering=True)  # progress shows up live when piped
     parser = argparse.ArgumentParser(prog="squint")
@@ -66,14 +71,19 @@ def main(argv: list[str] | None = None) -> int:
     watch_cmd.add_argument(
         "--quiet", action="store_true", help="no notification for clean screenshots"
     )
+    watch_cmd.add_argument(
+        "--app", action="store_true", help=argparse.SUPPRESS
+    )  # run as Squint.app's background engine
     args = parser.parse_args(argv)
     if args.command == "watch":
+        if args.app:
+            watch.exit_when_closed(sys.stdin)
         watch.run(
             MacOcrEngine(),
             MacDesktop(),
             make_clipboard=ClipboardWatcher,
-            launch_ui=launch_review_app,
-            quiet=args.quiet,
+            launch_ui=announce_url if args.app else launch_review_app,
+            quiet=args.quiet or args.app,
         )
         return 0
     return check(args.image, args.style)

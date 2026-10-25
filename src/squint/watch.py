@@ -1,11 +1,12 @@
 """squint watch: scan each new screenshot as it lands in the screenshot folder."""
 
+import os
 import signal
 import subprocess
 import tempfile
 import threading
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -111,6 +112,30 @@ def stop_on_signals() -> None:
         signal.signal(sig, interrupt)
 
 
+def exit_when_closed(
+    stream: Iterable[str], on_close: Callable[[], None] | None = None
+) -> threading.Thread:
+    """Squint.app holds our stdin open; when the app quits (or dies), shut down cleanly."""
+
+    def wait() -> None:
+        for _ in stream:
+            pass
+        (on_close or (lambda: os.kill(os.getpid(), signal.SIGTERM)))()
+
+    thread = threading.Thread(target=wait, daemon=True)
+    thread.start()
+    return thread
+
+
+def open_folder(folder: Path) -> FolderWatcher | None:
+    """None when macOS denies access (e.g. Desktop permission refused): clipboard only."""
+    try:
+        return FolderWatcher(folder)
+    except OSError as error:
+        print(f"can't read {folder} ({error.strerror}); watching the clipboard only")
+        return None
+
+
 def run(
     ocr: OcrEngine,
     desktop: Desktop,
@@ -134,11 +159,15 @@ def run(
         server = ReviewServer(on_export=clipboard.copy, live=True)
         server.start()
         ui = launch_ui(server.url)
-        folder_watcher = FolderWatcher(folder)
+        folder_watcher = open_folder(folder)
         print(f"watching {folder} and the clipboard (Ctrl-C to stop)")
         try:
             while True:
-                for path in folder_watcher.poll():
+                try:
+                    files = folder_watcher.poll() if folder_watcher else []
+                except OSError:
+                    files = []  # folder removed or permission revoked mid-run
+                for path in files:
                     handle(path, "file", ocr, classifier, server, desktop, quiet)
                 for path in clipboard.poll():
                     handle(path, "clipboard", ocr, classifier, server, desktop, quiet)
