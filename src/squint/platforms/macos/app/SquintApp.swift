@@ -638,12 +638,18 @@ final class Engine {
     var isRunning: Bool { process?.isRunning == true }
 
     static var resources: URL { Bundle.main.resourceURL! }
-    static var isBundled: Bool {
-        FileManager.default.fileExists(atPath: resources.appendingPathComponent("python/bin/python3").path)
+    /// The bundled Python for this Mac's CPU (the app is universal; each slice picks its own).
+    static var python: URL {
+        #if arch(arm64)
+        resources.appendingPathComponent("python-arm64/bin/python3")
+        #else
+        resources.appendingPathComponent("python-x86_64/bin/python3")
+        #endif
     }
+    static var isBundled: Bool { FileManager.default.fileExists(atPath: python.path) }
 
     func start() {
-        let python = Self.resources.appendingPathComponent("python/bin/python3")
+        let python = Self.python
         let process = Process()
         process.executableURL = python
         process.arguments = ["-m", "squint", "watch", "--app"]
