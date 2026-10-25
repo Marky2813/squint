@@ -5,9 +5,9 @@ import subprocess
 from pathlib import Path
 
 from squint.core.types import BBox, OcrLine, OcrWord
+from squint.platforms.macos.build import CACHE_DIR, compile_swift
 
 SOURCE = Path(__file__).with_name("ocr.swift")
-CACHE_DIR = Path.home() / ".cache" / "squint"
 # Vision prepares its recognition models on first use on a machine (~60 s, once);
 # later runs take ~0.2-0.4 s.
 TIMEOUT_SECONDS = 120
@@ -32,17 +32,7 @@ def parse_helper_output(raw: str) -> list[OcrLine]:
 
 
 def helper_binary(cache_dir: Path = CACHE_DIR) -> Path:
-    """Compile the helper on first use, and again whenever the source changes."""
-    binary = cache_dir / "squint-ocr"
-    if binary.exists() and binary.stat().st_mtime >= SOURCE.stat().st_mtime:
-        return binary
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    subprocess.run(
-        ["swiftc", "-O", str(SOURCE), "-o", str(binary)],
-        check=True,
-        capture_output=True,
-    )
-    return binary
+    return compile_swift([SOURCE], cache_dir / "squint-ocr")
 
 
 class MacOcrEngine:
