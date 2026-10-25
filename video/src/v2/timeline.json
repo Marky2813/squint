@@ -1,0 +1,76 @@
+{
+  "fps": 30,
+  "total": 1476,
+  "scenes": [
+    {
+      "name": "hook",
+      "start": 0,
+      "length": 350,
+      "vo": {
+        "file": "vo/open.wav",
+        "at": 6,
+        "length": 78
+      }
+    },
+    {
+      "name": "twist",
+      "start": 350,
+      "length": 190,
+      "vo": {
+        "file": "vo/twist.wav",
+        "at": 376,
+        "length": 97
+      }
+    },
+    {
+      "name": "refusal",
+      "start": 540,
+      "length": 139,
+      "vo": {
+        "file": "vo/refusal.wav",
+        "at": 548,
+        "length": 117
+      }
+    },
+    {
+      "name": "mentor",
+      "start": 679,
+      "length": 186,
+      "vo": {
+        "file": "vo/mentor.wav",
+        "at": 691,
+        "length": 162
+      }
+    },
+    {
+      "name": "threshold",
+      "start": 865,
+      "length": 254,
+      "vo": {
+        "file": "vo/threshold.wav",
+        "at": 879,
+        "length": 210
+      }
+    },
+    {
+      "name": "reward",
+      "start": 1119,
+      "length": 162,
+      "vo": {
+        "file": "vo/reward.wav",
+        "at": 1165,
+        "length": 100
+      }
+    },
+    {
+      "name": "close",
+      "start": 1281,
+      "length": 195,
+      "vo": {
+        "file": "vo/close.wav",
+        "at": 1293,
+        "length": 133
+      }
+    }
+  ]
+}

@@ -13,3 +13,6 @@ wheels/
 video/node_modules/
 video/out/
 .DS_Store
+video/tts/.venv/
+video/tts/*.onnx
+video/tts/*.bin
