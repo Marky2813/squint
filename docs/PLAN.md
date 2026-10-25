@@ -9,10 +9,10 @@ Screenshot → OCR → regex candidates → local Gemma judgement → user revie
 | Stage | Estimate / measured |
 |---|---|
 | File settle debounce | ~0.1 s |
-| Vision OCR (accurate) | 0.3–0.8 s (estimate) |
+| Vision OCR (accurate) | 0.2–0.4 s (measured; ~60 s once, on first-ever use per machine) |
 | Regex | ~0 |
-| Gemma, 4 parallel single-candidate calls, warm | 1.30 s median, 2.12 s p90 (measured, gemma3:4b) |
-| Gemma, cold model load | ~4.7 s (measured), so warm at launch |
+| Gemma, warm with primed prefix (gemma3:4b) | 1 cand 0.36 s, 2 cand 0.78 s, 4 cand 1.32 s (measured, M1 Pro) |
+| Gemma warm-up from cold | ~5.7 s (measured), done at launch |
 
 ## Pipeline
 
@@ -49,9 +49,12 @@ Screenshot → OCR → regex candidates → local Gemma judgement → user revie
 - Ollama must run with **`OLLAMA_NUM_PARALLEL` ≥ 4**; without it, parallel calls are serialised.
 - **One call per ambiguous candidate, run in parallel, max 4 per screenshot.** Overflow is flagged without asking Gemma.
 - Prompt: fixed instructions + ~8 few-shot examples + one candidate (`id`, matched value, regex rule, ±1 line of OCR context ≤200 chars). Without the examples, single-candidate calls flag almost everything.
-- Output: JSON schema `{"c<id>": boolean}` with the key required. `temperature: 0`, low `num_predict`. No category/confidence/reason: they cost ~2.5 s of generation, and the category comes from the regex rule.
+- Output: JSON schema `{"sensitive": boolean}`, key required. `temperature: 0`, low `num_predict`. No category/confidence/reason: they cost ~2.5 s of generation, and the category comes from the regex rule.
 - **Fail-safe:** a missing id, unparseable reply, timeout, or unreachable server means **flagged**.
 - Gemma only judges candidates. It never locates text or touches files.
+
+- **Prefix caching:** requests use `raw` mode with a hand-written Gemma chat template so all calls share a byte-identical prefix. Gemma 3's sliding-window attention means llama.cpp only reuses cache from checkpoints, which sit at the end of earlier prompts; `warm_up()` therefore sends the prefix alone to every slot. This cut a new candidate from ~1.4 s to ~0.36 s.
+- Smoke test (14 synthetic cases, regex tiers + Gemma): 14/14, with 5 of 14 reaching Gemma.
 
 ### Redaction (`core/`, Pillow)
 - Approved findings → `RedactionPlan` (padded rects, pure data) → `render(image, plan, style)`.
