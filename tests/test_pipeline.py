@@ -1,5 +1,5 @@
 from squint.core.classify import Verdicts
-from squint.core.pipeline import analyze, mask
+from squint.core.pipeline import analyze, mask, secret_span
 from squint.core.types import BBox, OcrLine, OcrWord
 
 FAKE_AWS = "AKIA" + "FAKE" * 4
@@ -76,3 +76,35 @@ def test_clean_text_has_no_findings():
 def test_mask_hides_middle_of_long_values_and_all_of_short_ones():
     assert mask("sk_live_FAKE1234FAKE") == "sk_l…AKE"
     assert mask("hunter2") == "•••••••"
+
+
+def test_secret_span_runs_to_end_of_token_after_ocr_misread():
+    text = "KEY=sk_live_FAKEab#cd123 next"
+    assert secret_span(text, 4, 18, "stripe_key") == (4, 24)
+
+
+def test_secret_span_stops_at_quotes_and_punctuation():
+    assert secret_span('a="s3cretValue" b', 3, 8, "assignment") == (3, 14)
+    assert secret_span("<jane@fastmail.com>", 1, 10, "email") == (1, 18)
+
+
+def test_secret_span_joins_split_jwt():
+    text = "Bearer eyJhbGciOiJIUzI1NiJ9 eyJzdWIiOiIxMjMifQ.sig123 end"
+    assert secret_span(text, 7, 27, "jwt") == (7, 53)
+
+
+def test_secret_span_joins_split_jwt_without_digits():
+    text = "Bearer eyJhbGciOiJIUzI1NiJ9 eyJzdWIiOiAibmFtZSJ9xy"
+    assert secret_span(text, 7, 27, "bearer") == (7, len(text))
+
+
+def test_secret_span_does_not_join_ordinary_words():
+    assert secret_span(
+        "Bearer eyJhbGciOiJIUzI1NiJ9 internationalization", 7, 27, "jwt"
+    ) == (7, 27)
+    text = "Bearer eyJhbGciOiJIUzI1NiJ9 https"
+    assert secret_span(text, 7, 27, "bearer") == (7, 27)
+    assert secret_span("ghp_abc123 eyJzdWIiOiIxMjMifQsig", 0, 10, "github_token") == (
+        0,
+        10,
+    )
