@@ -1,2 +1,4 @@
 def main() -> None:
-    print("Hello from squint!")
+    from squint.cli import main as cli_main
+
+    raise SystemExit(cli_main())
