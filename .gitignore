@@ -8,3 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Video project
+video/node_modules/
+video/out/
+.DS_Store
