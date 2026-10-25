@@ -160,10 +160,10 @@ export const EditorShot: React.FC = () => (
     </div>
     <Notification
       app="Messages"
-      title="Mom"
+      title="Priya"
       body={
         <>
-          new number, save it: <Leak>{PHONE}</Leak>
+          is this still your number? <Leak>{PHONE}</Leak>
         </>
       }
     />

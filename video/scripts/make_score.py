@@ -31,7 +31,7 @@ SCENES = [
     ("mentor", "mentor", 10, 140, 10),
     ("threshold", "threshold", 10, 210, 18),
     ("reward", "reward", 40, 130, 10),
-    ("close", "close", 10, 170, 40),
+    ("close", "close", 10, 190, 75),  # room for the last chord to ring out
 ]
 # The hook: one voice line per beat, quickening into a four-shot montage.
 HOOK_LEAD = 8
@@ -215,7 +215,7 @@ def score(timeline: dict) -> np.ndarray:
     sec = lambda f: f / FPS  # noqa: E731
     scenes = {s["name"]: s for s in timeline["scenes"]}
     end = sec(timeline["total"])
-    mix = Mix(end + 3)
+    mix = Mix(end)  # exactly the film's length: nothing gets cut off
     beat = 60 / BPM
     bar = beat * 4
 
@@ -286,14 +286,17 @@ def score(timeline: dict) -> np.ndarray:
     mix.add(mentor - bar / 2, sweep(bar / 2, 400, 8000), 0.45)
     groove(mentor, groove_back, lift_chords, 0.75, drums=False)
 
-    # Threshold to the end card: the full groove again, then a final chord on the card.
-    groove(groove_back, card, lift_chords, 1.0)
-    mix.add(card - beat, sweep(beat, 600, 9000), 0.4)
-    l, r = pad([48, 60, 64, 67, 71, 74], end - card + 2.5)
-    mix.add(card, l, 2.2, right=r, verb=0.6)
-    mix.add(card, kick(), 0.5)
-    for i, note in enumerate([72, 76, 79, 83]):
-        mix.add(card + i * beat / 2, pluck(note, 1.2), 0.3, pan=-0.3 + i * 0.2, verb=0.8)
+    # Threshold to the end card: stays calm (no drums), then one soft chord that rings out.
+    groove(groove_back, card, lift_chords, 0.75, drums=False)  # same as the mentor: no change at 28 s
+    tail = end - card
+    l, r = pad([48, 60, 64, 67, 71, 74], tail * 2)  # use the rising half only…
+    n = int(tail * RATE)
+    t = np.arange(n) / RATE
+    shape = np.minimum(1, t / 0.6) * np.exp(-t / (tail * 0.55))  # …reshaped: bloom, then decay
+    peak = np.max(np.abs(l[:n])) or 1
+    mix.add(card, l[:n] / peak * shape * 0.25, 1.0, right=r[:n] / peak * shape * 0.25, verb=0.6)
+    for i, note in enumerate([72, 76, 79]):
+        mix.add(card + i * beat, pluck(note, 1.6, 0.2), 0.18, pan=-0.3 + i * 0.3, verb=0.9)
 
     # Sidechain the sustained parts, add the room, then master.
     mix.left *= mix.duck
@@ -303,7 +306,7 @@ def score(timeline: dict) -> np.ndarray:
         mix.left = onepole(mix.left, 110, high=True)
         mix.right = onepole(mix.right, 110, high=True)
     stereo = np.stack([mix.left, mix.right], axis=1)
-    fade = int(1.2 * RATE)
+    fade = int(2.0 * RATE)  # a long, even fade to silence on the last frame
     stereo[-fade:] *= np.linspace(1, 0, fade)[:, None]
     rms = np.sqrt(np.mean(stereo**2))
     stereo *= 10 ** (-16 / 20) / rms  # music bed at about -16 dBFS RMS

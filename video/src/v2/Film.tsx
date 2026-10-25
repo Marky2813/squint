@@ -392,14 +392,13 @@ export const Film: React.FC = () => {
       ))}
       {PASTE_AT.map((p) => <Sfx key={p} at={s("hook") + p} file="paste.wav" volume={0.7} />)}
       {HOOK_SHOTS.map((_, i) => <Sfx key={i} at={s("twist") + 22 + i * 6} file="ring.wav" volume={0.22} />)}
-      <Sfx at={s("refusal") + 26} file="strike.wav" volume={0.45} />
       <Sfx at={s("mentor") + 46} file="chime.wav" volume={0.45} />
       {[22, 24, 26, 28].map((f) => <Sfx key={f} at={s("threshold") + f} file="key.wav" volume={0.5} />)}
       <Sfx at={s("threshold") + 66} file="shutter.wav" volume={0.6} />
       <Sfx at={s("threshold") + 96} file="whoosh.wav" volume={0.35} />
       <Sfx at={s("threshold") + 100} file="chime.wav" volume={0.4} />
       <Sfx at={s("reward") + 14} file="paste.wav" volume={0.7} />
-      <Sfx at={s("close") + timeline.cardAt} file="chime.wav" volume={0.4} />
+      <Sfx at={s("close") + timeline.cardAt} file="chime.wav" volume={0.22} />
     </AbsoluteFill>
   );
 };

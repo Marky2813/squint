@@ -24,7 +24,7 @@ PAUSE = 0.30
 PAUSES = {"montage": 0.22}  # a quicker rhythm for the montage
 LINES = {
     "open": ("Every day, you paste your screen into AI.", 0.97),
-    "text": ("A text from Mom, with her new number.", 1.0),
+    "text": ("A text pops up, with your phone number in it.", 1.0),
     "dash": ("Your dashboard, signed in as you.", 1.0),
     "montage": ("Keys. | Passwords. | Cards.", 1.0),
     "twist": ("You checked the bug. | But did you check the corners?", 0.88),
