@@ -46,7 +46,7 @@ A real screenshot from my desk, before and after:
     <th width="50%">After</th>
   </tr>
   <tr>
-    <td><img src="docs/images/real-before.png" alt="Before: the database password in DATABASE_URL and my email are readable"></td>
+    <td><img src="docs/images/real-before.png" alt="Before: the raw screenshot, with the database password, AWS key, Stripe key, session secret, my email and a Claude Console API key all readable"></td>
     <td><img src="docs/images/real-after.png" alt="After: the database password, keys, session secret, my email and a Claude Console API key are pixelated; the settings, support address, placeholder key and notarization log stay readable"></td>
   </tr>
 </table>
