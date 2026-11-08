@@ -195,7 +195,7 @@ uv run squint watch                          # needs `ollama serve` with gemma3:
 uv run squint check path/to/screenshot.png   # one file: findings, timing, redacted copy
 ```
 
-Logs are in `~/Library/Logs/Squint/squint.log` (menu bar → Show Log).
+Logs are in `~/Library/Logs/Squint/squint.log` (menu bar → Show Log)
 
 <details>
 <summary><b>Project layout</b></summary>
